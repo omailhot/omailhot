@@ -12,6 +12,25 @@
       </a>
 
       <div class="flex items-center gap-2">
+        <template v-if="sessionEmail">
+          <span class="hidden text-xs text-muted-foreground sm:inline">{{ sessionEmail }}</span>
+          <Button v-if="isAdmin && view !== 'admin'" size="sm" variant="outline" @click="$emit('open-admin')">
+            Admin
+          </Button>
+          <Button v-if="view === 'admin'" size="sm" variant="outline" @click="$emit('open-catalog')">
+            Catalog
+          </Button>
+          <Button size="sm" variant="ghost" @click="$emit('sign-out')">Sign out</Button>
+        </template>
+        <Button
+          v-else
+          size="sm"
+          variant="outline"
+          :disabled="authBusy"
+          @click="$emit('connect-google')"
+        >
+          {{ authBusy ? 'Connecting...' : 'Connect with Google' }}
+        </Button>
         <LocaleSwitcher />
         <ThemeToggle />
       </div>
@@ -22,6 +41,7 @@
 <script setup lang="ts">
 import { ShoppingBag } from 'lucide-vue-next'
 
+import Button from '@/components/ui/Button.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { m } from '@/paraglide/messages'
@@ -30,6 +50,17 @@ import { localizeHref } from '@/paraglide/runtime'
 defineProps<{
   title?: string
   subtitle?: string
+  sessionEmail?: string | null
+  isAdmin?: boolean
+  view?: 'catalog' | 'confirmation' | 'admin'
+  authBusy?: boolean
+}>()
+
+defineEmits<{
+  'connect-google': []
+  'sign-out': []
+  'open-admin': []
+  'open-catalog': []
 }>()
 
 const localizedHome = localizeHref('/')

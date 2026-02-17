@@ -130,6 +130,17 @@ export function useMerchStore(products: Product[]) {
     cartItems.value = []
   }
 
+  const replaceCart = (items: CartItem[]) => {
+    cartItems.value = items
+      .map((item) => ({
+        id: buildCartItemId(item.productId, item.selectedOptions),
+        productId: item.productId,
+        quantity: Math.max(1, Math.min(item.quantity, 25)),
+        selectedOptions: item.selectedOptions,
+      }))
+      .filter((item) => item.quantity > 0)
+  }
+
   const enqueueToast = (message: string) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     toastQueue.value = [...toastQueue.value, { id, message }]
@@ -182,6 +193,7 @@ export function useMerchStore(products: Product[]) {
       removeCartItem,
       updateCartItemQuantity,
       resetCart,
+      replaceCart,
       enqueueToast,
     },
   }

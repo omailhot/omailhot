@@ -6,7 +6,7 @@
           <CardTitle>{{ t.cartBuilder }}</CardTitle>
           <p class="text-xs text-muted-foreground">{{ t.policy }}</p>
         </div>
-        <Button variant="outline" size="sm" @click="$emit('reset-cart')">{{ t.resetCart }}</Button>
+        <Button variant="outline" size="sm" :disabled="readOnly" @click="$emit('reset-cart')">{{ t.resetCart }}</Button>
       </CardHeader>
 
       <CardContent class="space-y-4">
@@ -30,16 +30,28 @@
 
             <div class="mt-3 flex items-center justify-between">
               <div class="flex items-center gap-1 rounded-full border bg-background px-1 py-1">
-                <Button variant="ghost" size="icon" class="h-7 w-7 rounded-full" @click="$emit('update-item-quantity', line.id, line.quantity - 1)">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-7 w-7 rounded-full"
+                  :disabled="readOnly"
+                  @click="$emit('update-item-quantity', line.id, line.quantity - 1)"
+                >
                   <Minus class="size-3.5" />
                 </Button>
                 <span class="w-6 text-center text-sm font-medium">{{ line.quantity }}</span>
-                <Button variant="ghost" size="icon" class="h-7 w-7 rounded-full" @click="$emit('update-item-quantity', line.id, line.quantity + 1)">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-7 w-7 rounded-full"
+                  :disabled="readOnly"
+                  @click="$emit('update-item-quantity', line.id, line.quantity + 1)"
+                >
                   <Plus class="size-3.5" />
                 </Button>
               </div>
 
-              <Button variant="ghost" size="sm" @click="$emit('remove-item', line.id)">{{ t.removeItem }}</Button>
+              <Button variant="ghost" size="sm" :disabled="readOnly" @click="$emit('remove-item', line.id)">{{ t.removeItem }}</Button>
             </div>
           </div>
         </div>
@@ -63,7 +75,7 @@
               <span>{{ formatCurrency.format(creditRemaining) }}</span>
             </div>
           </div>
-          <Button class="mt-4 w-full" :disabled="cartLines.length === 0" @click="$emit('continue-checkout')">
+          <Button class="mt-4 w-full" :disabled="cartLines.length === 0 || readOnly" @click="$emit('continue-checkout')">
             <CreditCard class="size-4" />
             {{ t.continueSelection }}
           </Button>
@@ -105,6 +117,7 @@ const props = defineProps<{
   creditRemaining: number
   walletToPay: number
   formatCurrency: Intl.NumberFormat
+  readOnly?: boolean
 }>()
 
 defineEmits<{

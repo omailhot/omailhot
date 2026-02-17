@@ -1,6 +1,6 @@
 <template>
   <Drawer :open="open" :title="t.productDetails" @close="$emit('close')">
-    <div v-if="product" class="mx-auto max-w-5xl">
+    <div v-if="product" class="mx-auto max-w-6xl">
       <div class="mb-4 flex items-start justify-between gap-4">
         <div>
           <h2 class="text-xl font-semibold">{{ product.name[locale] }}</h2>
@@ -15,13 +15,13 @@
         </Button>
       </div>
 
-      <div class="grid gap-5 md:grid-cols-[1.1fr_0.9fr]">
+      <div class="grid gap-5 md:grid-cols-[1.35fr_0.65fr]">
         <ProductImageCarousel
           :id="product.id"
           :alt="product.name[locale]"
           :image-gallery="product.imageGallery"
           :gradient-class="product.gradientClass"
-          class-name="h-64 border"
+          class-name="h-[22rem] border md:h-[30rem]"
         />
 
         <div class="space-y-4 rounded-xl border bg-muted/20 p-4">

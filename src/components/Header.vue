@@ -12,15 +12,15 @@
       </a>
 
       <div class="flex items-center gap-2">
-        <template v-if="sessionEmail">
+        <template v-if="isAuthenticated">
           <span class="hidden text-xs text-muted-foreground sm:inline">{{ sessionEmail }}</span>
           <Button v-if="isAdmin && view !== 'admin'" size="sm" variant="outline" @click="$emit('open-admin')">
-            Admin
+            {{ adminLabel ?? 'Admin' }}
           </Button>
           <Button v-if="view === 'admin'" size="sm" variant="outline" @click="$emit('open-catalog')">
-            Catalog
+            {{ catalogLabel ?? 'Catalog' }}
           </Button>
-          <Button size="sm" variant="ghost" @click="$emit('sign-out')">Sign out</Button>
+          <Button size="sm" variant="ghost" @click="$emit('sign-out')">{{ signOutLabel ?? 'Sign out' }}</Button>
         </template>
         <Button
           v-else
@@ -29,7 +29,7 @@
           :disabled="authBusy"
           @click="$emit('connect-google')"
         >
-          {{ authBusy ? 'Connecting...' : 'Connect with Google' }}
+          {{ authBusy ? connectingLabel ?? 'Connecting...' : connectGoogleLabel ?? 'Connect with Google' }}
         </Button>
         <LocaleSwitcher />
         <ThemeToggle />
@@ -51,9 +51,15 @@ defineProps<{
   title?: string
   subtitle?: string
   sessionEmail?: string | null
+  isAuthenticated?: boolean
   isAdmin?: boolean
   view?: 'catalog' | 'confirmation' | 'admin'
   authBusy?: boolean
+  connectGoogleLabel?: string
+  connectingLabel?: string
+  signOutLabel?: string
+  adminLabel?: string
+  catalogLabel?: string
 }>()
 
 defineEmits<{

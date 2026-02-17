@@ -17,6 +17,8 @@ export type MerchCopy = {
   emailLabel: string
   emailPlaceholder: string
   signIn: string
+  connectGoogle: string
+  connecting: string
   closeLogin: string
   invalidEmail: string
   invalidDomain: string
@@ -43,6 +45,8 @@ export type MerchCopy = {
   profileSubtitle: string
   loggedInAs: string
   logout: string
+  admin: string
+  backToCatalogShort: string
   walletTitle: string
   walletSubtitle: string
   creditAvailable: string
@@ -73,6 +77,18 @@ export type MerchCopy = {
   orderSent: string
   orderAuthRequired: string
   orderSendFailed: string
+  orderNoDraftStatus: string
+  orderPlacedStatus: string
+  orderLockedStatus: string
+  orderUnlockedStatus: string
+  deadlinePassed: string
+  cannotEditAfterDeadline: string
+  unlockBeforeEditing: string
+  lockOrder: string
+  unlockOrder: string
+  lockExplanationTitle: string
+  lockExplanationBody: string
+  lockDeadlineLabel: string
   policy: string
 }
 
@@ -93,6 +109,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     emailLabel: 'Work e-mail',
     emailPlaceholder: 'name@propulso.io',
     signIn: 'Sign in',
+    connectGoogle: 'Connect with Google',
+    connecting: 'Connecting...',
     closeLogin: 'Close login',
     invalidEmail: 'Please enter a valid e-mail address.',
     invalidDomain: 'Use your @propulso.io e-mail to continue.',
@@ -125,6 +143,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     profileSubtitle: 'Manage your account and wallet.',
     loggedInAs: 'Logged in as',
     logout: 'Logout',
+    admin: 'Admin',
+    backToCatalogShort: 'Catalog',
     walletTitle: 'Wallet',
     walletSubtitle:
       'Propulso credit is applied first. Remaining amount is your personal payment.',
@@ -158,6 +178,19 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     orderSent: 'Order sent successfully.',
     orderAuthRequired: 'Please sign in before placing an order.',
     orderSendFailed: 'Order could not be sent. Please try again.',
+    orderNoDraftStatus: 'No saved order yet.',
+    orderPlacedStatus: 'Order is placed.',
+    orderLockedStatus: 'Order is locked.',
+    orderUnlockedStatus: 'Order is unlocked.',
+    deadlinePassed: 'March 1 deadline passed. Order is now placed.',
+    cannotEditAfterDeadline: 'March 1 deadline passed. Your order can no longer be modified.',
+    unlockBeforeEditing: 'Order is locked. Unlock it before editing.',
+    lockOrder: 'Lock order',
+    unlockOrder: 'Unlock order',
+    lockExplanationTitle: 'Lock-in before deadline',
+    lockExplanationBody:
+      'Lock your order before March 1. If not locked, your current selection will still be placed automatically on March 1.',
+    lockDeadlineLabel: 'Deadline',
     policy:
       'Propulso applies $150 credit first, then any remaining amount is paid from your personal wallet.',
   },
@@ -179,6 +212,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     emailLabel: 'E-mail propulso.io',
     emailPlaceholder: 'name@propulso.io',
     signIn: 'Se connecter',
+    connectGoogle: 'Se connecter avec Google',
+    connecting: 'Connexion...',
     closeLogin: 'Fermer la connexion',
     invalidEmail: 'Veuillez entrer une adresse e-mail valide.',
     invalidDomain: 'Utilisez votre e-mail @propulso.io.',
@@ -211,6 +246,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     profileSubtitle: 'Gérez votre compte et votre portefeuille.',
     loggedInAs: 'Connecté en tant que',
     logout: 'Se déconnecter',
+    admin: 'Admin',
+    backToCatalogShort: 'Catalogue',
     walletTitle: 'Portefeuille',
     walletSubtitle:
       'Le crédit Propulso est appliqué en premier. Le reste est à votre charge.',
@@ -245,6 +282,19 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     orderSent: 'Commande envoyée avec succès.',
     orderAuthRequired: 'Veuillez vous connecter avant de passer une commande.',
     orderSendFailed: "La commande n'a pas pu être envoyée. Veuillez réessayer.",
+    orderNoDraftStatus: 'Aucune commande enregistrée pour le moment.',
+    orderPlacedStatus: 'La commande est placée.',
+    orderLockedStatus: 'La commande est verrouillée.',
+    orderUnlockedStatus: 'La commande est déverrouillée.',
+    deadlinePassed: 'La date limite du 1er mars est passée. La commande est maintenant placée.',
+    cannotEditAfterDeadline: 'La date limite du 1er mars est passée. La commande ne peut plus être modifiée.',
+    unlockBeforeEditing: 'La commande est verrouillée. Déverrouillez-la pour modifier.',
+    lockOrder: 'Verrouiller la commande',
+    unlockOrder: 'Déverrouiller la commande',
+    lockExplanationTitle: 'Verrouillage avant la date limite',
+    lockExplanationBody:
+      "Verrouillez votre commande avant le 1er mars. Si elle n'est pas verrouillée, la sélection actuelle sera quand même placée automatiquement le 1er mars.",
+    lockDeadlineLabel: 'Date limite',
     policy:
       "Propulso applique d'abord 150 $ de crédit, puis le reste est payé depuis votre portefeuille personnel.",
   },

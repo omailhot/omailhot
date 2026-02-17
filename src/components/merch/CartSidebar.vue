@@ -2,11 +2,10 @@
   <aside class="xl:sticky xl:top-24 xl:self-start">
     <Card class="shadow-md">
       <CardHeader class="flex flex-row items-start justify-between gap-3">
-        <div>
+        <div class="flex items-center justify-between w-full">
           <CardTitle>{{ t.cartBuilder }}</CardTitle>
-          <p class="text-xs text-muted-foreground">{{ t.policy }}</p>
+          <Button variant="outline" size="sm" :disabled="readOnly" @click="$emit('reset-cart')">{{ t.resetCart }}</Button>
         </div>
-        <Button variant="outline" size="sm" :disabled="readOnly" @click="$emit('reset-cart')">{{ t.resetCart }}</Button>
       </CardHeader>
 
       <CardContent class="space-y-4">

@@ -3,9 +3,15 @@
     :title="t.appTitle"
     :subtitle="t.appSubtitle"
     :session-email="sessionUser?.email ?? null"
+    :is-authenticated="Boolean(sessionUser)"
     :is-admin="isAdmin"
     :view="currentView"
     :auth-busy="authBusy"
+    :connect-google-label="t.connectGoogle"
+    :connecting-label="t.connecting"
+    :sign-out-label="t.logout"
+    :admin-label="t.admin"
+    :catalog-label="t.backToCatalogShort"
     @connect-google="onConnectGoogle"
     @sign-out="onSignOut"
     @open-admin="onOpenAdmin"
@@ -14,35 +20,6 @@
 
   <main class="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_14%_6%,rgba(255,160,0,0.23),transparent_34%),radial-gradient(circle_at_75%_0%,rgba(255,0,53,0.16),transparent_35%)] pb-6">
     <div class="mx-auto max-w-[96rem] px-4 py-6 sm:px-6">
-      <section
-        v-if="sessionUser && currentView !== 'admin'"
-        class="mb-4 rounded-xl border bg-background/80 p-4"
-      >
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm">
-            {{ orderStatusMessage }}
-          </p>
-          <div class="flex items-center gap-2">
-            <Button
-              v-if="activeOrderId && activeOrderLocked && !isLockDeadlinePassed"
-              :disabled="lockActionBusy"
-              variant="outline"
-              size="sm"
-              @click="onUnlockOrder"
-            >
-              Unlock order
-            </Button>
-            <Button
-              v-if="!activeOrderLocked && !isLockDeadlinePassed"
-              :disabled="lockActionBusy || !activeOrderId"
-              size="sm"
-              @click="onLockOrder"
-            >
-              Lock order
-            </Button>
-          </div>
-        </div>
-      </section>
       <div v-if="currentView === 'admin'">
         <AdminDashboard
           :loading="adminLoading"
@@ -92,7 +69,14 @@
         :wallet-to-pay="derived.walletToPay.value"
         :format-currency="formatCurrency"
         :is-submitting="isSubmittingOrder"
+        :lock-action-busy="lockActionBusy"
+        :is-order-locked="activeOrderLocked"
+        :is-lock-deadline-passed="isLockDeadlinePassed"
+        :lock-deadline-label="lockDeadlineLabel"
+        :order-status-message="orderStatusMessage"
         @back="onBackToCatalog"
+        @lock-order="onLockOrder"
+        @unlock-order="onUnlockOrder"
         @place-order="submitOrder"
       />
     </div>
@@ -122,7 +106,6 @@ import CatalogSection from '@/components/merch/CatalogSection.vue'
 import OrderConfirmationPage from '@/components/merch/OrderConfirmationPage.vue'
 import ProductDetailsModal from '@/components/merch/ProductDetailsModal.vue'
 import ToastStack from '@/components/merch/ToastStack.vue'
-import Button from '@/components/ui/Button.vue'
 import { merchCopy } from '@/config/merch-copy'
 import { products } from '@/config/merch-store'
 import { useMerchStore } from '@/hooks/use-merch-store'
@@ -181,18 +164,18 @@ const isOrderEditable = computed(
 )
 const orderStatusMessage = computed(() => {
   if (!activeOrderId.value) {
-    return `No saved order yet. Save and lock before ${lockDeadlineLabel.value}.`
+    return `${t.value.orderNoDraftStatus} ${t.value.lockDeadlineLabel}: ${lockDeadlineLabel.value}.`
   }
   if (activeOrderPlacedAt.value) {
-    return `Order is placed. Locked at ${new Date(activeOrderPlacedAt.value).toLocaleString(locale.value === 'fr' ? 'fr-CA' : 'en-CA')}.`
+    return `${t.value.orderPlacedStatus} ${new Date(activeOrderPlacedAt.value).toLocaleString(locale.value === 'fr' ? 'fr-CA' : 'en-CA')}.`
   }
   if (activeOrderLocked.value) {
-    return `Order is locked. If needed, unlock it before ${lockDeadlineLabel.value}.`
+    return `${t.value.orderLockedStatus} ${t.value.lockDeadlineLabel}: ${lockDeadlineLabel.value}.`
   }
   if (isLockDeadlinePassed.value) {
-    return `March 1 deadline passed. Your order is now placed.`
+    return t.value.deadlinePassed
   }
-  return `Order is unlocked. Lock it in before ${lockDeadlineLabel.value}, otherwise it will be placed automatically on March 1.`
+  return `${t.value.orderUnlockedStatus} ${t.value.lockDeadlineLabel}: ${lockDeadlineLabel.value}.`
 })
 
 const filteredProducts = computed(() => {
@@ -253,10 +236,6 @@ const onUpdateCartItemQuantity = (cartItemId: string, nextQuantity: number) => {
 }
 
 const onContinueCheckout = () => {
-  if (!ensureOrderEditable()) {
-    return
-  }
-
   if (derived.cartLines.value.length === 0) {
     return
   }
@@ -486,7 +465,7 @@ const loadCurrentUserOrder = async () => {
 
 const ensureOrderEditable = () => {
   if (!sessionUser.value) {
-    actions.enqueueToast(t.value.orderAuthRequired)
+    void onConnectGoogle()
     return false
   }
 
@@ -495,20 +474,25 @@ const ensureOrderEditable = () => {
   }
 
   if (isLockDeadlinePassed.value) {
-    actions.enqueueToast('March 1 deadline passed. Your order can no longer be modified.')
+    actions.enqueueToast(t.value.cannotEditAfterDeadline)
     return false
   }
 
-  actions.enqueueToast('Order is locked. Unlock it before editing.')
+  actions.enqueueToast(t.value.unlockBeforeEditing)
   return false
 }
 
 const onConnectGoogle = async () => {
   authBusy.value = true
   try {
+    const callbackUrl = new URL(window.location.href)
+    if (callbackUrl.hostname === '127.0.0.1') {
+      callbackUrl.hostname = 'localhost'
+    }
+
     const result = await neonClient.auth.signIn.social({
       provider: 'google',
-      callbackURL: window.location.href,
+      callbackURL: callbackUrl.toString(),
     })
     if ((result as { error?: { message?: string } })?.error) {
       throw new Error((result as { error?: { message?: string } }).error?.message ?? 'Google sign-in failed')
@@ -606,7 +590,7 @@ const submitOrder = async () => {
     const sessionPayload = await neonClient.auth.getSession()
     const sessionUser = getSessionUser(sessionPayload)
     if (!sessionUser) {
-      actions.enqueueToast(t.value.orderAuthRequired)
+      await onConnectGoogle()
       return
     }
 
@@ -702,7 +686,7 @@ const onLockOrder = async () => {
     return
   }
   if (isLockDeadlinePassed.value) {
-    actions.enqueueToast('March 1 deadline passed. Order is now placed.')
+    actions.enqueueToast(t.value.deadlinePassed)
     return
   }
 
@@ -726,10 +710,10 @@ const onLockOrder = async () => {
 
     activeOrderLocked.value = true
     activeOrderPlacedAt.value = new Date().toISOString()
-    actions.enqueueToast('Order locked in.')
+    actions.enqueueToast(t.value.orderLockedStatus)
   } catch (error) {
     console.error(error)
-    actions.enqueueToast('Unable to lock order.')
+    actions.enqueueToast(t.value.orderSendFailed)
   } finally {
     lockActionBusy.value = false
   }
@@ -740,7 +724,7 @@ const onUnlockOrder = async () => {
     return
   }
   if (isLockDeadlinePassed.value) {
-    actions.enqueueToast('March 1 deadline passed. Order can no longer be unlocked.')
+    actions.enqueueToast(t.value.deadlinePassed)
     return
   }
 
@@ -764,10 +748,10 @@ const onUnlockOrder = async () => {
 
     activeOrderLocked.value = false
     activeOrderPlacedAt.value = null
-    actions.enqueueToast('Order unlocked.')
+    actions.enqueueToast(t.value.orderUnlockedStatus)
   } catch (error) {
     console.error(error)
-    actions.enqueueToast('Unable to unlock order.')
+    actions.enqueueToast(t.value.orderSendFailed)
   } finally {
     lockActionBusy.value = false
   }

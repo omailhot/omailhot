@@ -37,6 +37,15 @@
         </CardHeader>
 
         <CardContent class="space-y-4">
+          <div class="rounded-xl border bg-muted/30 p-3 text-sm">
+            <p class="font-medium">{{ t.lockExplanationTitle }}</p>
+            <p class="mt-1 text-muted-foreground">{{ t.lockExplanationBody }}</p>
+            <p class="mt-2 text-xs text-muted-foreground">
+              {{ t.lockDeadlineLabel }}: {{ lockDeadlineLabel }}
+            </p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ orderStatusMessage }}</p>
+          </div>
+
           <div class="space-y-2 text-sm">
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t.subtotal }}</span>
@@ -62,6 +71,21 @@
 
           <div class="grid gap-2">
             <Button variant="outline" @click="$emit('back')">{{ t.backToCatalog }}</Button>
+            <Button
+              v-if="!isLockDeadlinePassed && isOrderLocked"
+              variant="outline"
+              :disabled="lockActionBusy || isSubmitting"
+              @click="$emit('unlock-order')"
+            >
+              {{ t.unlockOrder }}
+            </Button>
+            <Button
+              v-if="!isLockDeadlinePassed && !isOrderLocked"
+              :disabled="lockActionBusy || isSubmitting || cartLines.length === 0"
+              @click="$emit('lock-order')"
+            >
+              {{ t.lockOrder }}
+            </Button>
             <Button :disabled="cartLines.length === 0 || isSubmitting" @click="$emit('place-order')">
               {{ t.placeOrder }}
             </Button>
@@ -103,11 +127,18 @@ const props = defineProps<{
   walletToPay: number
   formatCurrency: Intl.NumberFormat
   isSubmitting?: boolean
+  lockActionBusy?: boolean
+  isOrderLocked: boolean
+  isLockDeadlinePassed: boolean
+  lockDeadlineLabel: string
+  orderStatusMessage: string
 }>()
 
 defineEmits<{
   back: []
   'place-order': []
+  'lock-order': []
+  'unlock-order': []
 }>()
 
 const getVariantLabels = (line: CartLine) =>

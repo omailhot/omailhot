@@ -165,6 +165,51 @@ export function useMerchStore(products: Product[]) {
     )
   }
 
+  const updateCartItemVariants = (cartItemId: string, nextSelectedOptions: Record<string, string>) => {
+    const source = cartItems.value.find((item) => item.id === cartItemId)
+    if (!source) {
+      return
+    }
+
+    const nextId = buildCartItemId(source.productId, nextSelectedOptions)
+    if (nextId === cartItemId) {
+      cartItems.value = cartItems.value.map((item) =>
+        item.id === cartItemId
+          ? {
+              ...item,
+              selectedOptions: nextSelectedOptions,
+              selectedOptionLabels: undefined,
+            }
+          : item,
+      )
+      return
+    }
+
+    const target = cartItems.value.find((item) => item.id === nextId)
+    if (target) {
+      cartItems.value = cartItems.value
+        .filter((item) => item.id !== cartItemId && item.id !== nextId)
+        .concat({
+          ...target,
+          quantity: Math.min(25, target.quantity + source.quantity),
+          selectedOptions: nextSelectedOptions,
+          selectedOptionLabels: undefined,
+        })
+      return
+    }
+
+    cartItems.value = cartItems.value.map((item) =>
+      item.id === cartItemId
+        ? {
+            ...item,
+            id: nextId,
+            selectedOptions: nextSelectedOptions,
+            selectedOptionLabels: undefined,
+          }
+        : item,
+    )
+  }
+
   const quickAdd = (productId: string) => {
     const product = productById.value.get(productId)
     if (!product) {
@@ -241,6 +286,7 @@ export function useMerchStore(products: Product[]) {
       quickAdd,
       removeCartItem,
       updateCartItemQuantity,
+      updateCartItemVariants,
       resetCart,
       replaceCart,
       enqueueToast,

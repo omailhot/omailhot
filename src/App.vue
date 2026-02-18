@@ -32,7 +32,19 @@
       </div>
       <div class="mt-5" v-else-if="currentView === 'catalog'">
         <div
-          v-if="!isAdmin && activeOrderConfirmedAt"
+          v-if="!sessionUser"
+          class="mb-4 flex flex-col gap-3 rounded-2xl border border-amber-300/60 bg-amber-50/85 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p class="font-semibold text-amber-900">{{ t.loggedOutBannerTitle }}</p>
+            <p class="text-sm text-amber-800/90">{{ t.loggedOutBannerBody }}</p>
+          </div>
+          <Button class="shrink-0" @click="onConnectGoogle">
+            {{ t.connectGoogle }}
+          </Button>
+        </div>
+        <div
+          v-if="activeOrderConfirmedAt"
           class="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
@@ -71,7 +83,7 @@
         </div>
       </div>
       <OrderConfirmationPage
-        v-else-if="currentView === 'confirmation' || currentView === 'placed'"
+        v-else-if="currentView === 'confirmation'"
         :t="t"
         :locale="locale"
         :cart-lines="derived.cartLines.value"
@@ -86,30 +98,45 @@
         :is-lock-deadline-passed="isLockDeadlinePassed"
         :lock-deadline-label="lockDeadlineLabel"
         :order-status-message="orderStatusMessage"
-        :is-placed="currentView === 'placed'"
-        :back-label="currentView === 'placed' ? t.modifyOrder : t.backToCatalog"
-        @back="currentView === 'placed' ? onGoModifyOrder : onBackToCatalog"
+        :is-placed="false"
+        :back-label="t.backToCatalog"
+        @back="onBackToCatalog"
+        @remove-item="onRemoveCartItem"
+        @update-item-quantity="onUpdateCartItemQuantity"
+        @update-item-variants="onUpdateCartItemVariants"
         @place-order="submitOrder"
       />
       <OrderConfirmationPage
+        v-else-if="currentView === 'placed'"
+        :t="t"
+        :locale="locale"
+        :cart-lines="placedOrderPreview.cartLines"
+        :subtotal="placedOrderPreview.subtotal"
+        :credit-used="placedOrderPreview.creditUsed"
+        :credit-remaining="placedOrderPreview.creditRemaining"
+        :wallet-to-pay="placedOrderPreview.walletToPay"
+        :format-currency="formatCurrency"
+        :is-submitting="false"
+        :lock-action-busy="lockActionBusy"
+        :is-order-locked="Boolean(activeOrderConfirmedAt)"
+        :is-lock-deadline-passed="false"
+        :lock-deadline-label="''"
+        :order-status-message="orderStatusMessage"
+        :read-only="true"
+        :is-placed="true"
+        :show-lock-toggle="true"
+        :back-label="t.backToCatalog"
+        @back="onBackToCatalog"
+        @toggle-lock="onToggleOrderLock"
+        @place-order="() => undefined"
+      />
+      <AdminOrderDetailsPage
         v-else
         :t="t"
         :locale="locale"
         :cart-lines="adminPreview.cartLines"
-        :subtotal="adminPreview.subtotal"
-        :credit-used="adminPreview.creditUsed"
-        :credit-remaining="adminPreview.creditRemaining"
-        :wallet-to-pay="adminPreview.walletToPay"
         :format-currency="formatCurrency"
-        :is-submitting="false"
-        :lock-action-busy="false"
-        :is-order-locked="adminPreview.isOrderLocked"
-        :is-lock-deadline-passed="adminPreview.isLockDeadlinePassed"
-        :lock-deadline-label="adminPreview.lockDeadlineLabel"
-        :order-status-message="adminPreview.orderStatusMessage"
-        :read-only="true"
         @back="onBackFromAdminOrder"
-        @place-order="() => undefined"
       />
     </div>
   </main>
@@ -131,6 +158,26 @@
       <CheckCircle2 class="mx-auto mb-3 size-10 text-primary" />
       <p class="text-lg font-semibold">{{ t.orderSent }}</p>
       <p class="mt-1 text-sm text-muted-foreground">{{ t.orderPlacedStatus }}</p>
+    </div>
+  </div>
+
+  <div
+    v-if="showOverwriteModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4"
+    @click.self="onCancelOverwriteModal"
+  >
+    <div class="w-full max-w-md rounded-2xl border border-border/70 bg-background p-6 shadow-2xl">
+      <h3 class="text-lg font-semibold">{{ t.orderPlacedStatus }}</h3>
+      <p class="mt-2 text-sm text-muted-foreground">
+        {{ t.existingOrderBannerTitle }}
+      </p>
+      <p class="mt-1 text-sm text-muted-foreground">{{ t.overwriteOrderPrompt }}</p>
+      <div class="mt-5 grid gap-2 sm:grid-cols-2">
+        <Button variant="outline" @click="onGoToExistingOrderFromModal">
+          {{ t.viewMyOrder }}
+        </Button>
+        <Button @click="onConfirmOverwriteOrder">{{ t.overwriteOrderAction }}</Button>
+      </div>
     </div>
   </div>
 
@@ -174,6 +221,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import Header from '@/components/Header.vue'
 import AdminDashboard from '@/components/merch/AdminDashboard.vue'
+import AdminOrderDetailsPage from '@/components/merch/AdminOrderDetailsPage.vue'
 import CartDrawer from '@/components/merch/CartDrawer.vue'
 import CartSidebar from '@/components/merch/CartSidebar.vue'
 import CatalogSection from '@/components/merch/CatalogSection.vue'
@@ -182,7 +230,7 @@ import ProductDetailsModal from '@/components/merch/ProductDetailsModal.vue'
 import ToastStack from '@/components/merch/ToastStack.vue'
 import Button from '@/components/ui/Button.vue'
 import { merchCopy } from '@/config/merch-copy'
-import { products } from '@/config/merch-store'
+import { COMPANY_CREDIT, products } from '@/config/merch-store'
 import { useMerchStore } from '@/hooks/use-merch-store'
 import { neonClient } from '@/lib/neon-client'
 import { getLocale } from '@/paraglide/runtime'
@@ -203,6 +251,7 @@ const { state, derived, actions } = useMerchStore(products)
 const currentView = ref<'catalog' | 'confirmation' | 'placed' | 'admin' | 'admin-order'>('catalog')
 const isSubmittingOrder = ref(false)
 const showCenteredOrderToast = ref(false)
+const showOverwriteModal = ref(false)
 const lockActionBusy = ref(false)
 const authBusy = ref(false)
 const sessionUser = ref<SessionUser | null>(null)
@@ -236,7 +285,38 @@ const activeOrderPlacedAt = ref<string | null>(null)
 const activeOrderConfirmedAt = ref<string | null>(null)
 const activeOrderLockDeadlineAt = ref('2026-03-02T00:00:00Z')
 const isPersistingDraft = ref(false)
+const pendingCartAction = ref<null | (() => void)>(null)
 const adminSelectedOrderId = ref<string | null>(null)
+const placedOrderPreview = ref<{
+  cartLines: Array<{
+    id: string
+    quantity: number
+    lineTotal: number
+    selectedOptions: Record<string, string>
+    selectedOptionLabels?: Record<string, string>
+    product: {
+      name: Record<StoreLocale, string>
+      imageGallery?: string[]
+      gradientClass?: string
+      variantGroups?: Array<{
+        id: string
+        label: Record<StoreLocale, string>
+        type: 'size' | 'color' | 'select'
+        options: Array<{ id: string; label: Record<StoreLocale, string>; swatchHex?: string }>
+      }>
+    }
+  }>
+  subtotal: number
+  creditUsed: number
+  creditRemaining: number
+  walletToPay: number
+}>({
+  cartLines: [],
+  subtotal: 0,
+  creditUsed: 0,
+  creditRemaining: 0,
+  walletToPay: 0,
+})
 const adminPreview = ref<{
   cartLines: Array<{
     id: string
@@ -320,18 +400,22 @@ const onQuickAdd = (productId: string) => {
     return
   }
 
-  actions.quickAdd(productId)
-  actions.enqueueToast(t.value.addedToCart)
-  void persistCartDraft()
+  runCartActionOrPromptOverwrite(() => {
+    actions.quickAdd(productId)
+    actions.enqueueToast(t.value.addedToCart)
+    void persistCartDraft()
+  })
 }
 
 const onAddToCart = (input: { productId: string; selectedOptions: Record<string, string>; quantity: number }) => {
   if (!ensureOrderEditable()) {
     return
   }
-  actions.addToCart(input.productId, input.selectedOptions, input.quantity)
-  actions.enqueueToast(t.value.addedToCart)
-  void persistCartDraft()
+  runCartActionOrPromptOverwrite(() => {
+    actions.addToCart(input.productId, input.selectedOptions, input.quantity)
+    actions.enqueueToast(t.value.addedToCart)
+    void persistCartDraft()
+  })
 }
 
 const onResetCart = () => {
@@ -358,6 +442,14 @@ const onUpdateCartItemQuantity = (cartItemId: string, nextQuantity: number) => {
   void persistCartDraft()
 }
 
+const onUpdateCartItemVariants = (cartItemId: string, nextSelectedOptions: Record<string, string>) => {
+  if (!ensureOrderEditable()) {
+    return
+  }
+  actions.updateCartItemVariants(cartItemId, nextSelectedOptions)
+  void persistCartDraft()
+}
+
 const onContinueCheckout = () => {
   if (derived.cartLines.value.length === 0) {
     return
@@ -375,9 +467,96 @@ const onOpenDashboard = () => {
   currentView.value = activeOrderConfirmedAt.value ? 'placed' : 'confirmation'
 }
 
-const onGoModifyOrder = () => {
-  showCenteredOrderToast.value = false
-  currentView.value = 'catalog'
+const runCartActionOrPromptOverwrite = (action: () => void) => {
+  if (activeOrderConfirmedAt.value) {
+    pendingCartAction.value = action
+    showOverwriteModal.value = true
+    return
+  }
+  action()
+}
+
+const onConfirmOverwriteOrder = () => {
+  showOverwriteModal.value = false
+  activeOrderConfirmedAt.value = null
+  activeOrderPlacedAt.value = null
+  placedOrderPreview.value = {
+    cartLines: [],
+    subtotal: 0,
+    creditUsed: 0,
+    creditRemaining: 0,
+    walletToPay: 0,
+  }
+  const action = pendingCartAction.value
+  pendingCartAction.value = null
+  action?.()
+}
+
+const onGoToExistingOrderFromModal = () => {
+  showOverwriteModal.value = false
+  pendingCartAction.value = null
+  currentView.value = 'placed'
+}
+
+const onCancelOverwriteModal = () => {
+  showOverwriteModal.value = false
+  pendingCartAction.value = null
+}
+
+const onToggleOrderLock = async () => {
+  if (!sessionUser.value || lockActionBusy.value) {
+    return
+  }
+
+  if (!activeOrderConfirmedAt.value) {
+    await submitOrder()
+    return
+  }
+
+  if (!activeOrderId.value) {
+    return
+  }
+
+  lockActionBusy.value = true
+  try {
+    const orderResult = await neonClient
+      .from('orders')
+      .select('raw_payload')
+      .eq('id', activeOrderId.value)
+      .eq('user_id', sessionUser.value.id)
+      .single()
+    if (orderResult.error) {
+      throw orderResult.error
+    }
+
+    const currentRawPayload = (orderResult.data as { raw_payload?: unknown } | null)?.raw_payload
+    const nextRawPayload =
+      currentRawPayload && typeof currentRawPayload === 'object'
+        ? { ...(currentRawPayload as Record<string, unknown>), confirmedAt: null }
+        : { confirmedAt: null }
+
+    const updateOrder = await neonClient
+      .from('orders')
+      .update({
+        submitted_at: new Date().toISOString(),
+        raw_payload: nextRawPayload,
+      })
+      .eq('id', activeOrderId.value)
+      .eq('user_id', sessionUser.value.id)
+    if (updateOrder.error) {
+      throw updateOrder.error
+    }
+
+    activeOrderConfirmedAt.value = null
+    await loadCurrentUserOrder()
+    currentView.value = 'confirmation'
+    actions.enqueueToast(t.value.reopenOrder)
+  } catch (error) {
+    console.error(error)
+    actions.enqueueToast(t.value.orderSendFailed)
+  } finally {
+    lockActionBusy.value = false
+  }
 }
 
 const onBackFromAdminOrder = () => {
@@ -869,6 +1048,13 @@ const loadCurrentUserOrder = async () => {
     activeOrderPlacedAt.value = null
     activeOrderConfirmedAt.value = null
     activeOrderLockDeadlineAt.value = '2026-03-02T00:00:00Z'
+    placedOrderPreview.value = {
+      cartLines: [],
+      subtotal: 0,
+      creditUsed: 0,
+      creditRemaining: 0,
+      walletToPay: 0,
+    }
     actions.replaceCart([])
     return
   }
@@ -927,7 +1113,48 @@ const loadCurrentUserOrder = async () => {
     selectedOptionLabels: labelsByCartLineId.get(item.cart_line_id),
   }))
 
-  actions.replaceCart(cartItems)
+  if (activeOrderConfirmedAt.value) {
+    const lines = cartItems
+      .map((item) => {
+        const product = products.find((candidate) => candidate.id === item.productId)
+        if (!product) {
+          return null
+        }
+
+        return {
+          id: item.id,
+          quantity: item.quantity,
+          lineTotal: item.quantity * product.price,
+          selectedOptions: item.selectedOptions,
+          selectedOptionLabels: item.selectedOptionLabels,
+          product,
+        }
+      })
+      .filter((line): line is NonNullable<typeof line> => line !== null)
+
+    const subtotal = lines.reduce((total, line) => total + line.lineTotal, 0)
+    const creditUsed = Math.min(COMPANY_CREDIT, subtotal)
+    const creditRemaining = Math.max(COMPANY_CREDIT - creditUsed, 0)
+    const walletToPay = Math.max(subtotal - COMPANY_CREDIT, 0)
+
+    placedOrderPreview.value = {
+      cartLines: lines,
+      subtotal,
+      creditUsed,
+      creditRemaining,
+      walletToPay,
+    }
+    actions.replaceCart([])
+  } else {
+    placedOrderPreview.value = {
+      cartLines: [],
+      subtotal: 0,
+      creditUsed: 0,
+      creditRemaining: 0,
+      walletToPay: 0,
+    }
+    actions.replaceCart(cartItems)
+  }
 }
 
 const ensureOrderEditable = () => {
@@ -1164,3 +1391,4 @@ onMounted(async () => {
   }
 })
 </script>
+

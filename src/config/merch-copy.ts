@@ -91,8 +91,12 @@ export type MerchCopy = {
   lockExplanationTitle: string
   lockExplanationBody: string
   lockDeadlineLabel: string
+  loggedOutBannerTitle: string
+  loggedOutBannerBody: string
   existingOrderBannerTitle: string
   viewMyOrder: string
+  overwriteOrderPrompt: string
+  overwriteOrderAction: string
   policy: string
 }
 
@@ -197,8 +201,13 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     lockExplanationBody:
       'Lock your order before March 1. If not locked, your current selection will still be placed automatically on March 1.',
     lockDeadlineLabel: 'Deadline',
+    loggedOutBannerTitle: 'Sign in with your @propulso.io e-mail',
+    loggedOutBannerBody:
+      'Orders from non-Propulso accounts are not processed. Connect your Propulso account before submitting.',
     existingOrderBannerTitle: 'You already have an order in progress.',
     viewMyOrder: 'View my order',
+    overwriteOrderPrompt: 'Do you want to overwrite your existing order or view it?',
+    overwriteOrderAction: 'Overwrite order',
     policy:
       'Propulso applies $150 credit first, then any remaining amount is paid from your personal wallet.',
   },
@@ -284,7 +293,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     confirmationSubtitle: 'Résumé avant validation finale.',
     invoiceLater: 'Montant facturé plus tard',
     invoiceExplanation:
-      "Tout montant au-delà du crédit entreprise sera facturé après approbation interne.",
+      "Tout montant au-delà du crédit entreprise vous sera facturé après approbation interne.",
     backToCatalog: 'Retour au catalogue',
     placeOrder: 'Confirmer la sélection',
     reopenOrder: 'Ré-ouvrir la commande',
@@ -305,8 +314,13 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     lockExplanationBody:
       "Verrouillez votre commande avant le 1er mars. Si elle n'est pas verrouillée, la sélection actuelle sera quand même placée automatiquement le 1er mars.",
     lockDeadlineLabel: 'Date limite',
+    loggedOutBannerTitle: 'Connectez-vous avec votre courriel @propulso.io',
+    loggedOutBannerBody:
+      "Les commandes provenant d'un autre compte ne seront pas traitées. Connectez votre compte Propulso avant l'envoi.",
     existingOrderBannerTitle: 'Vous avez deja une commande en cours.',
     viewMyOrder: 'Voir ma commande',
+    overwriteOrderPrompt: 'Voulez-vous ecraser votre commande existante ou la consulter?',
+    overwriteOrderAction: 'Ecraser la commande',
     policy:
       "Propulso applique d'abord 150 $ de crédit, puis le reste est payé depuis votre portefeuille personnel.",
   },

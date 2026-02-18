@@ -34,14 +34,43 @@
                 />
               </div>
               <div class="flex min-w-0 flex-1 items-start justify-between gap-3">
-                <div>
+                <div class="min-w-0">
                   <p class="font-medium">{{ line.product.name[locale] }}</p>
-                  <p v-if="getVariantLabels(line).length > 0" class="mt-1 text-xs text-muted-foreground">
-                    {{ getVariantLabels(line).join(' | ') }}
+                  <p class="mt-1 text-xs text-muted-foreground">
+                    {{ t.variants }}: {{ getVariantLabels(line).join(' | ') || t.noVariants }}
                   </p>
                   <p class="mt-1 text-xs text-muted-foreground">{{ t.quantity }}: {{ line.quantity }}</p>
                 </div>
-                <p class="font-semibold">{{ formatCurrency.format(line.lineTotal) }}</p>
+                <div class="flex shrink-0 flex-col items-end gap-2">
+                  <p class="font-semibold">{{ formatCurrency.format(line.lineTotal) }}</p>
+                  <div v-if="!readOnly" class="flex flex-col items-end gap-2">
+                    <div
+                      v-for="group in line.product.variantGroups ?? []"
+                      :key="`${line.id}-${group.id}`"
+                      class="flex flex-wrap justify-end gap-1"
+                    >
+                      <Button
+                        v-for="option in group.options"
+                        :key="option.id"
+                        size="sm"
+                        :variant="line.selectedOptions[group.id] === option.id ? 'default' : 'outline'"
+                        class="h-7 px-2 text-xs"
+                        @click="updateVariantSelection(line, group.id, option.id)"
+                      >
+                        {{ option.label[locale] }}
+                      </Button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <QuantityStepper
+                        :model-value="line.quantity"
+                        @update:model-value="(nextQuantity) => $emit('update-item-quantity', line.id, nextQuantity)"
+                      />
+                      <Button variant="ghost" size="sm" @click="$emit('remove-item', line.id)">
+                        {{ t.removeItem }}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -82,30 +111,23 @@
 
           <div class="grid gap-2">
             <Button variant="outline" @click="$emit('back')">{{ backLabel ?? t.backToCatalog }}</Button>
+            <Button
+              v-if="showLockToggle"
+              variant="outline"
+              :disabled="lockActionBusy"
+              @click="$emit('toggle-lock')"
+            >
+              <component :is="isOrderLocked ? LockOpen : Lock" class="size-4" />
+              {{ isOrderLocked ? t.unlockOrder : t.lockOrder }}
+            </Button>
             <template v-if="!readOnly">
               <Button
                 :disabled="cartLines.length === 0 || isSubmitting"
-                :class="
-                  isPlaced
-                    ? 'bg-zinc-700 text-zinc-100 hover:bg-zinc-600'
-                    : ''
-                "
-                @mouseenter="isPlacedButtonHovered = true"
-                @mouseleave="isPlacedButtonHovered = false"
+                class="bg-orange-500 text-zinc-900 hover:bg-orange-600"
                 @click="$emit('place-order')"
               >
-                <component
-                  :is="isPlacedButtonHovered ? LockOpen : Lock"
-                  v-if="isPlaced"
-                  class="size-4"
-                />
-                {{
-                  isPlacedButtonHovered && isPlaced
-                    ? t.reopenOrder
-                    : isPlaced
-                      ? t.orderPlacedStatus
-                      : t.placeOrder
-                }}
+                <Lock class="size-4" />
+                {{ t.lockOrder }}
               </Button>
             </template>
           </div>
@@ -117,7 +139,6 @@
 
 <script setup lang="ts">
 import { Lock, LockOpen } from 'lucide-vue-next'
-import { ref } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -125,6 +146,7 @@ import CardContent from '@/components/ui/CardContent.vue'
 import CardDescription from '@/components/ui/CardDescription.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
+import QuantityStepper from '@/components/ui/QuantityStepper.vue'
 import type { MerchCopy } from '@/config/merch-copy'
 import type { ProductVariantGroup, StoreLocale } from '@/types/merch'
 
@@ -160,24 +182,20 @@ const props = defineProps<{
   readOnly?: boolean
   isPlaced?: boolean
   backLabel?: string
+  showLockToggle?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   back: []
+  'toggle-lock': []
+  'remove-item': [cartItemId: string]
+  'update-item-quantity': [cartItemId: string, nextQuantity: number]
+  'update-item-variants': [cartItemId: string, nextSelectedOptions: Record<string, string>]
   'place-order': []
 }>()
 
-const isPlacedButtonHovered = ref(false)
-
 const getVariantLabels = (line: CartLine) =>
   {
-    const snapshotLabels = Object.entries(line.selectedOptionLabels ?? {})
-      .filter(([key, value]) => Boolean(key) && Boolean(value))
-      .map(([key, value]) => `${key}: ${value}`)
-    if (snapshotLabels.length > 0) {
-      return snapshotLabels
-    }
-
     const mappedLabels = (line.product.variantGroups ?? [])
       .map((group) => {
         const selectedOption = group.options.find((option) => option.id === line.selectedOptions[group.id])
@@ -193,8 +211,31 @@ const getVariantLabels = (line: CartLine) =>
       return mappedLabels
     }
 
+    const snapshotLabels = Object.entries(line.selectedOptionLabels ?? {})
+      .filter(([key, value]) => Boolean(key) && Boolean(value))
+      .map(([key, value]) => `${key}: ${value}`)
+    if (snapshotLabels.length > 0) {
+      return snapshotLabels
+    }
+
     return Object.entries(line.selectedOptions)
       .filter(([, value]) => Boolean(value))
       .map(([key, value]) => `${key}: ${value}`)
   }
+
+const updateVariantSelection = (
+  line: CartLine,
+  groupId: string,
+  optionId: string,
+) => {
+  if (line.selectedOptions[groupId] === optionId) {
+    return
+  }
+
+  const nextSelectedOptions = {
+    ...line.selectedOptions,
+    [groupId]: optionId,
+  }
+  emit('update-item-variants', line.id, nextSelectedOptions)
+}
 </script>

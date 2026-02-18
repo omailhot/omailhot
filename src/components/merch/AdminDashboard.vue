@@ -10,7 +10,18 @@
             Items to Buy
           </Button>
         </div>
-        <Button size="sm" variant="outline" @click="$emit('refresh')">Refresh</Button>
+        <div class="flex items-center gap-2">
+          <Button
+            v-if="activeTab === 'items'"
+            size="sm"
+            variant="outline"
+            :disabled="loading || Boolean(error) || itemsSummary.length === 0"
+            @click="exportItemsSummaryCsv"
+          >
+            Export CSV
+          </Button>
+          <Button size="sm" variant="outline" @click="$emit('refresh')">Refresh</Button>
+        </div>
       </CardHeader>
       <CardContent class="px-0">
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
@@ -27,18 +38,23 @@
                 <th class="py-2 pr-3">Items</th>
                 <th class="py-2 pr-3">Subtotal</th>
                 <th class="py-2">Placed</th>
-                <th class="py-2 pl-3 text-right">Open</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id" class="border-t">
+              <tr
+                v-for="order in orders"
+                :key="order.id"
+                class="cursor-pointer border-t transition-colors hover:bg-muted/40"
+                role="button"
+                tabindex="0"
+                @click="$emit('select-order', order.id)"
+                @keydown.enter="$emit('select-order', order.id)"
+                @keydown.space.prevent="$emit('select-order', order.id)"
+              >
                 <td class="py-2 pr-3">{{ order.user_name }}</td>
                 <td class="py-2 pr-3">{{ order.item_count }}</td>
                 <td class="py-2 pr-3">{{ formatSubtotal(order.subtotal) }}</td>
                 <td class="py-2">{{ formatDateTime(order.created_at) }}</td>
-                <td class="py-2 pl-3 text-right">
-                  <Button size="sm" variant="ghost" @click="$emit('select-order', order.id)">View</Button>
-                </td>
               </tr>
             </tbody>
           </table>
@@ -67,20 +83,43 @@
             </tbody>
           </table>
         </div>
+
+        <div
+          v-if="activeTab === 'items'"
+          class="mt-4 grid gap-3 rounded-xl border border-border/70 bg-muted/20 p-4 sm:grid-cols-3"
+        >
+          <div>
+            <p class="text-xs uppercase tracking-wide text-muted-foreground">Initial Budget</p>
+            <p class="text-lg font-semibold">{{ formatSubtotal(initialBudget) }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-muted-foreground">Total Costs</p>
+            <p class="text-lg font-semibold">{{ formatSubtotal(totalCosts) }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-muted-foreground">
+              {{ budgetDelta >= 0 ? 'Remaining' : 'Over budget' }}
+            </p>
+            <p :class="['text-lg font-semibold', budgetDelta < 0 ? 'text-red-600' : 'text-emerald-700']">
+              {{ formatSubtotal(Math.abs(budgetDelta)) }}
+            </p>
+          </div>
+        </div>
       </CardContent>
     </Card>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
+import { COMPANY_CREDIT } from '@/config/merch-store'
 
-defineProps<{
+const props = defineProps<{
   loading: boolean
   error: string | null
   orders: Array<{
@@ -105,6 +144,41 @@ defineEmits<{
 }>()
 
 const activeTab = ref<'orders' | 'items'>('orders')
+const totalCosts = computed(() =>
+  props.orders.reduce((total, order) => total + Number(order.subtotal || 0), 0),
+)
+const initialBudget = computed(() => props.orders.length * COMPANY_CREDIT)
+const budgetDelta = computed(() => initialBudget.value - totalCosts.value)
+
+const escapeCsv = (value: string | number) => {
+  const raw = String(value ?? '')
+  if (raw.includes('"') || raw.includes(',') || raw.includes('\n')) {
+    return `"${raw.replace(/"/g, '""')}"`
+  }
+  return raw
+}
+
+const exportItemsSummaryCsv = () => {
+  const headers = ['Item', 'Variants', 'Total Qty', 'Orders']
+  const rows = props.itemsSummary.map((item) => [
+    item.product_name,
+    item.variants,
+    item.total_quantity,
+    item.order_count,
+  ])
+
+  const csvLines = [headers, ...rows].map((row) => row.map((cell) => escapeCsv(cell)).join(','))
+  const csvContent = `\uFEFF${csvLines.join('\n')}`
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `items-to-buy-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
+}
 
 const formatDateTime = (value: string) => {
   const date = new Date(value)

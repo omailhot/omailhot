@@ -33,11 +33,11 @@
       <div class="mt-5" v-else-if="currentView === 'catalog'">
         <div
           v-if="!sessionUser"
-          class="mb-4 flex flex-col gap-3 rounded-2xl border border-amber-300/60 bg-amber-50/85 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+          class="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,160,0,0.18),rgba(255,0,53,0.14))] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-[linear-gradient(135deg,rgba(255,160,0,0.24),rgba(255,0,53,0.2))]"
         >
           <div>
-            <p class="font-semibold text-amber-900">{{ t.loggedOutBannerTitle }}</p>
-            <p class="text-sm text-amber-800/90">{{ t.loggedOutBannerBody }}</p>
+            <p class="font-semibold text-foreground">{{ t.loggedOutBannerTitle }}</p>
+            <p class="text-sm text-foreground/85 dark:text-foreground/80">{{ t.loggedOutBannerBody }}</p>
           </div>
           <Button class="shrink-0" @click="onConnectGoogle">
             {{ t.connectGoogle }}
@@ -51,9 +51,14 @@
             <p class="font-semibold">{{ t.existingOrderBannerTitle }}</p>
             <p class="text-sm text-muted-foreground">{{ orderStatusMessage }}</p>
           </div>
-          <Button class="shrink-0" @click="onOpenDashboard">
-            {{ t.viewMyOrder }}
-          </Button>
+          <div class="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Button variant="outline" :disabled="lockActionBusy" @click="onToggleOrderLock">
+              {{ t.unlockOrder }}
+            </Button>
+            <Button @click="onOpenDashboard">
+              {{ t.viewMyOrder }}
+            </Button>
+          </div>
         </div>
         <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <CatalogSection
@@ -217,7 +222,7 @@
 
 <script setup lang="ts">
 import { CheckCircle2, ShoppingBasket } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import Header from '@/components/Header.vue'
 import AdminDashboard from '@/components/merch/AdminDashboard.vue'
@@ -249,6 +254,7 @@ const formatCurrency = computed(
 
 const { state, derived, actions } = useMerchStore(products)
 const currentView = ref<'catalog' | 'confirmation' | 'placed' | 'admin' | 'admin-order'>('catalog')
+const VIEW_SESSION_KEY = 'propulso-merch-current-view'
 const isSubmittingOrder = ref(false)
 const showCenteredOrderToast = ref(false)
 const showOverwriteModal = ref(false)
@@ -549,7 +555,6 @@ const onToggleOrderLock = async () => {
 
     activeOrderConfirmedAt.value = null
     await loadCurrentUserOrder()
-    currentView.value = 'confirmation'
     actions.enqueueToast(t.value.reopenOrder)
   } catch (error) {
     console.error(error)
@@ -1010,7 +1015,7 @@ const refreshSession = async () => {
   if (adminCheck.error) {
     if (isPolicyRecursionError(adminCheck.error, 'admin_users')) {
       warnPolicyRecursionOnce('admin_users')
-      isAdmin.value = user.isAdminClaim
+      isAdmin.value = false
       return
     }
     if (isMissingTableError(adminCheck.error, 'admin_users')) {
@@ -1018,11 +1023,15 @@ const refreshSession = async () => {
     } else {
       console.error(adminCheck.error)
     }
-    isAdmin.value = user.isAdminClaim
+    isAdmin.value = false
     return
   }
 
-  isAdmin.value = user.isAdminClaim || (adminCheck.data?.length ?? 0) > 0
+  const hasAdminRow = (adminCheck.data?.length ?? 0) > 0
+  isAdmin.value = hasAdminRow
+  if (user.isAdminClaim && !hasAdminRow) {
+    actions.enqueueToast('Admin claim detected, but admin_users mapping is missing. Add your user_id to admin_users.')
+  }
 }
 
 const loadCurrentUserOrder = async () => {
@@ -1376,6 +1385,13 @@ const submitOrder = async () => {
 }
 
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    const savedView = window.sessionStorage.getItem(VIEW_SESSION_KEY)
+    if (savedView === 'confirmation' || savedView === 'placed' || savedView === 'admin') {
+      currentView.value = savedView
+    }
+  }
+
   if (window.location.hostname === '127.0.0.1') {
     const normalizedUrl = new URL(window.location.href)
     normalizedUrl.hostname = 'localhost'
@@ -1385,10 +1401,22 @@ onMounted(async () => {
 
   try {
     await refreshSession()
+    if ((currentView.value === 'admin' || currentView.value === 'admin-order') && !isAdmin.value) {
+      currentView.value = 'catalog'
+    }
     await loadCurrentUserOrder()
   } catch (error) {
     console.error(error)
   }
+})
+
+watch(currentView, (nextView) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const persistedView = nextView === 'admin-order' ? 'admin' : nextView
+  window.sessionStorage.setItem(VIEW_SESSION_KEY, persistedView)
 })
 </script>
 

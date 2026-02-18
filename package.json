@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "cf:dev": "npm run build && npx wrangler pages dev dist",
     "cf:deploy": "npm run build && npx wrangler pages deploy dist",
+    "cf:deploy:omailhot": "npm run build && npx wrangler pages deploy dist --project-name omailhot",
     "test": "vitest run",
     "format": "biome format",
     "lint": "biome lint",

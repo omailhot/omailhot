@@ -47,35 +47,13 @@
             </div>
 
             <div class="mt-3 flex items-center justify-between">
-              <div
-                class="bg-background flex items-center gap-1 rounded-full border px-1 py-1"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-7 w-7 rounded-full"
-                  :disabled="readOnly"
-                  @click="
-                    $emit('update-item-quantity', line.id, line.quantity - 1)
-                  "
-                >
-                  <Minus class="size-3.5" />
-                </Button>
-                <span class="w-6 text-center text-sm font-medium">{{
-                  line.quantity
-                }}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-7 w-7 rounded-full"
-                  :disabled="readOnly"
-                  @click="
-                    $emit('update-item-quantity', line.id, line.quantity + 1)
-                  "
-                >
-                  <Plus class="size-3.5" />
-                </Button>
-              </div>
+              <QuantityStepper
+                :model-value="line.quantity"
+                :disabled="readOnly"
+                @update:model-value="
+                  (nextQuantity) => $emit('update-item-quantity', line.id, nextQuantity)
+                "
+              />
 
               <Button
                 variant="ghost"
@@ -125,13 +103,14 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Minus, Plus, ShoppingBasket } from "lucide-vue-next";
+import { ArrowRight, ShoppingBasket } from "lucide-vue-next";
 
 import Button from "@/components/ui/Button.vue";
 import Card from "@/components/ui/Card.vue";
 import CardContent from "@/components/ui/CardContent.vue";
 import CardHeader from "@/components/ui/CardHeader.vue";
 import CardTitle from "@/components/ui/CardTitle.vue";
+import QuantityStepper from "@/components/ui/QuantityStepper.vue";
 import type { MerchCopy } from "@/config/merch-copy";
 import type { ProductVariantGroup, StoreLocale } from "@/types/merch";
 

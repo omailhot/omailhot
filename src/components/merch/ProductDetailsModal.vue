@@ -48,15 +48,7 @@
 
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium">{{ t.quantity }}</span>
-            <div class="flex items-center gap-1 rounded-full border bg-background px-1 py-1">
-              <Button variant="ghost" size="icon" class="h-7 w-7 rounded-full" @click="quantity = Math.max(1, quantity - 1)">
-                <Minus class="size-3.5" />
-              </Button>
-              <span class="w-7 text-center text-sm font-medium">{{ quantity }}</span>
-              <Button variant="ghost" size="icon" class="h-7 w-7 rounded-full" @click="quantity = Math.min(25, quantity + 1)">
-                <Plus class="size-3.5" />
-              </Button>
-            </div>
+            <QuantityStepper v-model="quantity" :min="1" :max="25" />
           </div>
 
           <Button class="w-full" @click="addSelectionToCart">{{ t.addSelection }}</Button>
@@ -67,13 +59,14 @@
 </template>
 
 <script setup lang="ts">
-import { Minus, Plus, X } from 'lucide-vue-next'
+import { X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 
 import ProductImageCarousel from '@/components/merch/ProductImageCarousel.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Button from '@/components/ui/Button.vue'
 import Drawer from '@/components/ui/Drawer.vue'
+import QuantityStepper from '@/components/ui/QuantityStepper.vue'
 import type { MerchCopy } from '@/config/merch-copy'
 import type { Product, StoreLocale } from '@/types/merch'
 

@@ -74,6 +74,8 @@ export type MerchCopy = {
   invoiceExplanation: string
   backToCatalog: string
   placeOrder: string
+  reopenOrder: string
+  modifyOrder: string
   orderSent: string
   orderAuthRequired: string
   orderSendFailed: string
@@ -176,7 +178,9 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     invoiceExplanation:
       'Any amount exceeding company credit will be invoiced after internal approval.',
     backToCatalog: 'Back to catalog',
-    placeOrder: 'Confirm and send',
+    placeOrder: 'Confirm selection',
+    reopenOrder: 'Re-open order',
+    modifyOrder: 'Modify order',
     orderSent: 'Order sent successfully.',
     orderAuthRequired: 'Please sign in before placing an order.',
     orderSendFailed: 'Order could not be sent. Please try again.',
@@ -282,7 +286,9 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
     invoiceExplanation:
       "Tout montant au-delà du crédit entreprise sera facturé après approbation interne.",
     backToCatalog: 'Retour au catalogue',
-    placeOrder: 'Confirmer et envoyer',
+    placeOrder: 'Confirmer la sélection',
+    reopenOrder: 'Ré-ouvrir la commande',
+    modifyOrder: 'Modifier la commande',
     orderSent: 'Commande envoyée avec succès.',
     orderAuthRequired: 'Veuillez vous connecter avant de passer une commande.',
     orderSendFailed: "La commande n'a pas pu être envoyée. Veuillez réessayer.",

@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { COMPANY_CREDIT } from '@/config/merch-store'
 import type { CartItem, Category, Product } from '@/types/merch'
@@ -7,6 +7,8 @@ type ToastMessage = {
   id: string
   message: string
 }
+
+const CART_SESSION_KEY = 'propulso-merch-cart'
 
 const buildCartItemId = (productId: string, selectedOptions: Record<string, string>) => {
   const entries = Object.entries(selectedOptions).sort(([a], [b]) => a.localeCompare(b))
@@ -23,7 +25,49 @@ export function useMerchStore(products: Product[]) {
   const activeProductId = ref<string | null>(null)
   const toastQueue = ref<ToastMessage[]>([])
 
+  const persistCartToSession = () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.sessionStorage.setItem(CART_SESSION_KEY, JSON.stringify(cartItems.value))
+  }
+
+  const restoreCartFromSession = () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const raw = window.sessionStorage.getItem(CART_SESSION_KEY)
+    if (!raw) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as CartItem[]
+      if (!Array.isArray(parsed)) {
+        return
+      }
+
+      cartItems.value = parsed
+        .map((item) => ({
+          id: buildCartItemId(item.productId, item.selectedOptions ?? {}),
+          productId: item.productId,
+          quantity: Math.max(1, Math.min(Number(item.quantity ?? 1), 25)),
+          selectedOptions:
+            item.selectedOptions && typeof item.selectedOptions === 'object'
+              ? item.selectedOptions
+              : {},
+        }))
+        .filter((item) => Boolean(item.productId))
+    } catch (error) {
+      console.warn('Could not restore cart from session storage', error)
+    }
+  }
+
   onMounted(() => {
+    restoreCartFromSession()
+
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         cartOpen.value = false
@@ -36,6 +80,14 @@ export function useMerchStore(products: Product[]) {
       window.removeEventListener('keydown', onEscape)
     })
   })
+
+  watch(
+    cartItems,
+    () => {
+      persistCartToSession()
+    },
+    { deep: true },
+  )
 
   const productById = computed(() => new Map(products.map((product) => [product.id, product])))
 
@@ -83,6 +135,7 @@ export function useMerchStore(products: Product[]) {
           productId,
           quantity: normalizedQuantity,
           selectedOptions,
+          selectedOptionLabels: undefined,
         },
       ]
       return
@@ -136,6 +189,7 @@ export function useMerchStore(products: Product[]) {
         productId: item.productId,
         quantity: Math.max(1, Math.min(item.quantity, 25)),
         selectedOptions: item.selectedOptions,
+        selectedOptionLabels: item.selectedOptionLabels,
       }))
       .filter((item) => item.quantity > 0)
   }

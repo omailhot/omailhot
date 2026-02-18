@@ -53,7 +53,7 @@ defineProps<{
   sessionEmail?: string | null
   isAuthenticated?: boolean
   isAdmin?: boolean
-  view?: 'catalog' | 'confirmation' | 'admin' | 'admin-order'
+  view?: 'catalog' | 'confirmation' | 'placed' | 'admin' | 'admin-order'
   authBusy?: boolean
   connectGoogleLabel?: string
   connectingLabel?: string

@@ -57,10 +57,20 @@ create index if not exists idx_app_users_last_seen on app_users(last_seen_at des
 -- Neon Auth + RLS setup for direct frontend Data API access
 -- Make sure Neon Auth is enabled in the Neon console before relying on auth.user_id().
 grant usage on schema public to authenticated;
+grant usage on schema public to anonymous;
 grant select, insert, update, delete on orders to authenticated;
+grant select, insert, update, delete on orders to anonymous;
 grant select, insert, update, delete on order_items to authenticated;
+grant select, insert, update, delete on order_items to anonymous;
 grant select, insert, update on app_users to authenticated;
+grant select, insert, update on app_users to anonymous;
 grant select on admin_users to authenticated;
+grant select on admin_users to anonymous;
+
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anonymous;
 
 alter table orders enable row level security;
 alter table order_items enable row level security;
@@ -242,7 +252,4 @@ create policy admin_users_select
   on admin_users
   for select
   to authenticated
-  using (
-    user_id = auth.user_id()
-    or exists (select 1 from admin_users a where a.user_id = auth.user_id())
-  );
+  using (user_id = auth.user_id());

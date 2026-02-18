@@ -32,4 +32,5 @@ export type CartItem = {
   productId: string
   quantity: number
   selectedOptions: Record<string, string>
+  selectedOptionLabels?: Record<string, string>
 }

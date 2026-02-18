@@ -18,21 +18,21 @@
     @open-catalog="currentView = 'catalog'"
   />
 
-  <main class="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_14%_6%,rgba(255,160,0,0.23),transparent_34%),radial-gradient(circle_at_75%_0%,rgba(255,0,53,0.16),transparent_35%)] pb-6">
+  <main class="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_14%_6%,rgba(255,160,0,0.23),transparent_34%),radial-gradient(circle_at_75%_0%,rgba(255,0,53,0.16),transparent_35%)] pb-24 xl:pb-6">
     <div class="mx-auto max-w-[96rem] px-4 py-6 sm:px-6">
       <div v-if="currentView === 'admin'">
         <AdminDashboard
           :loading="adminLoading"
           :error="adminError"
-          :users="adminUsers"
           :orders="adminOrders"
+          :items-summary="adminItemsSummary"
           @refresh="loadAdminDashboard"
           @select-order="onOpenAdminOrder"
         />
       </div>
       <div class="mt-5" v-else-if="currentView === 'catalog'">
         <div
-          v-if="!isAdmin && activeOrderId"
+          v-if="!isAdmin && activeOrderConfirmedAt"
           class="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
@@ -53,6 +53,7 @@
           @quick-add="onQuickAdd"
         />
         <CartSidebar
+          class="hidden xl:block"
           :t="t"
           :locale="locale"
           :cart-lines="derived.cartLines.value"
@@ -70,7 +71,7 @@
         </div>
       </div>
       <OrderConfirmationPage
-        v-else-if="currentView === 'confirmation'"
+        v-else-if="currentView === 'confirmation' || currentView === 'placed'"
         :t="t"
         :locale="locale"
         :cart-lines="derived.cartLines.value"
@@ -85,9 +86,9 @@
         :is-lock-deadline-passed="isLockDeadlinePassed"
         :lock-deadline-label="lockDeadlineLabel"
         :order-status-message="orderStatusMessage"
-        @back="onBackToCatalog"
-        @lock-order="onLockOrder"
-        @unlock-order="onUnlockOrder"
+        :is-placed="currentView === 'placed'"
+        :back-label="currentView === 'placed' ? t.modifyOrder : t.backToCatalog"
+        @back="currentView === 'placed' ? onGoModifyOrder : onBackToCatalog"
         @place-order="submitOrder"
       />
       <OrderConfirmationPage
@@ -108,8 +109,6 @@
         :order-status-message="adminPreview.orderStatusMessage"
         :read-only="true"
         @back="onBackFromAdminOrder"
-        @lock-order="() => undefined"
-        @unlock-order="() => undefined"
         @place-order="() => undefined"
       />
     </div>
@@ -127,13 +126,55 @@
 
   <ToastStack :toasts="state.toastQueue.value" />
 
+  <div v-if="showCenteredOrderToast" class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl border border-border/70 bg-background/95 p-6 text-center shadow-2xl backdrop-blur">
+      <CheckCircle2 class="mx-auto mb-3 size-10 text-primary" />
+      <p class="text-lg font-semibold">{{ t.orderSent }}</p>
+      <p class="mt-1 text-sm text-muted-foreground">{{ t.orderPlacedStatus }}</p>
+    </div>
+  </div>
+
+  <button
+    v-if="currentView === 'catalog'"
+    type="button"
+    class="fixed inset-x-0 bottom-0 z-30 flex min-h-18 cursor-pointer items-center justify-between border-t border-border/70 bg-background/95 px-4 py-4 backdrop-blur transition-colors hover:bg-background xl:hidden"
+    @click="actions.setCartOpen(true)"
+  >
+    <div class="flex items-center gap-2">
+      <ShoppingBasket class="size-4" />
+      <span class="font-medium">{{ t.cartBuilder }}</span>
+      <span class="text-sm text-muted-foreground">{{ derived.itemCount.value }} {{ t.items }}</span>
+    </div>
+    <span class="font-semibold">{{ formatCurrency.format(derived.subtotal.value) }}</span>
+  </button>
+
+  <CartDrawer
+    :open="state.cartOpen.value"
+    :t="t"
+    :locale="locale"
+    :cart-lines="derived.cartLines.value"
+    :subtotal="derived.subtotal.value"
+    :credit-used="derived.creditUsed.value"
+    :credit-remaining="derived.creditRemaining.value"
+    :wallet-to-pay="derived.walletToPay.value"
+    :format-currency="formatCurrency"
+    :read-only="!isOrderEditable"
+    @close="actions.setCartOpen(false)"
+    @reset-cart="onResetCart"
+    @remove-item="onRemoveCartItem"
+    @update-item-quantity="onUpdateCartItemQuantity"
+    @continue-checkout="onContinueCheckout"
+  />
+
 </template>
 
 <script setup lang="ts">
+import { CheckCircle2, ShoppingBasket } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import Header from '@/components/Header.vue'
 import AdminDashboard from '@/components/merch/AdminDashboard.vue'
+import CartDrawer from '@/components/merch/CartDrawer.vue'
 import CartSidebar from '@/components/merch/CartSidebar.vue'
 import CatalogSection from '@/components/merch/CatalogSection.vue'
 import OrderConfirmationPage from '@/components/merch/OrderConfirmationPage.vue'
@@ -159,8 +200,9 @@ const formatCurrency = computed(
 )
 
 const { state, derived, actions } = useMerchStore(products)
-const currentView = ref<'catalog' | 'confirmation' | 'admin' | 'admin-order'>('catalog')
+const currentView = ref<'catalog' | 'confirmation' | 'placed' | 'admin' | 'admin-order'>('catalog')
 const isSubmittingOrder = ref(false)
+const showCenteredOrderToast = ref(false)
 const lockActionBusy = ref(false)
 const authBusy = ref(false)
 const sessionUser = ref<SessionUser | null>(null)
@@ -171,11 +213,19 @@ const adminUsers = ref<
 const adminOrders = ref<
   Array<{
     id: string
-    request_id: string
-    user_email: string | null
+    user_name: string
     item_count: number
     subtotal: string | number
     created_at: string
+  }>
+>([])
+const adminItemsSummary = ref<
+  Array<{
+    key: string
+    product_name: string
+    variants: string
+    total_quantity: number
+    order_count: number
   }>
 >([])
 const adminLoading = ref(false)
@@ -183,7 +233,9 @@ const adminError = ref<string | null>(null)
 const activeOrderId = ref<string | null>(null)
 const activeOrderLocked = ref(false)
 const activeOrderPlacedAt = ref<string | null>(null)
+const activeOrderConfirmedAt = ref<string | null>(null)
 const activeOrderLockDeadlineAt = ref('2026-03-02T00:00:00Z')
+const isPersistingDraft = ref(false)
 const adminSelectedOrderId = ref<string | null>(null)
 const adminPreview = ref<{
   cartLines: Array<{
@@ -191,6 +243,7 @@ const adminPreview = ref<{
     quantity: number
     lineTotal: number
     selectedOptions: Record<string, string>
+    selectedOptionLabels?: Record<string, string>
     product: {
       name: Record<StoreLocale, string>
       imageGallery?: string[]
@@ -231,45 +284,25 @@ const lockDeadlineLabel = computed(() =>
   }),
 )
 const isLockDeadlinePassed = computed(() => Date.now() >= lockDeadlineDate.value.getTime())
-const isOrderEditable = computed(
-  () => Boolean(sessionUser.value) && Boolean(!activeOrderLocked.value) && !isLockDeadlinePassed.value,
-)
+const isOrderEditable = computed(() => Boolean(sessionUser.value))
 const orderStatusMessage = computed(() => {
-  if (!activeOrderId.value) {
-    return `${t.value.orderNoDraftStatus} ${t.value.lockDeadlineLabel}: ${lockDeadlineLabel.value}.`
+  if (!activeOrderConfirmedAt.value) {
+    return t.value.orderNoDraftStatus
   }
-  if (activeOrderPlacedAt.value) {
-    return `${t.value.orderPlacedStatus} ${new Date(activeOrderPlacedAt.value).toLocaleString(locale.value === 'fr' ? 'fr-CA' : 'en-CA')}.`
-  }
-  if (activeOrderLocked.value) {
-    return `${t.value.orderLockedStatus} ${t.value.lockDeadlineLabel}: ${lockDeadlineLabel.value}.`
-  }
-  if (isLockDeadlinePassed.value) {
-    return t.value.deadlinePassed
-  }
-  return `${t.value.orderUnlockedStatus} ${t.value.lockDeadlineLabel}: ${lockDeadlineLabel.value}.`
+  return `${t.value.orderPlacedStatus} ${new Date(activeOrderConfirmedAt.value).toLocaleString(locale.value === 'fr' ? 'fr-CA' : 'en-CA')}.`
 })
 
 const buildOrderStatusMessage = (input: {
   activeOrderId: string | null
   placedAt: string | null
-  isLocked: boolean
-  isLockDeadlinePassed: boolean
-  lockDeadlineLabel: string
 }) => {
   if (!input.activeOrderId) {
-    return `${t.value.orderNoDraftStatus} ${t.value.lockDeadlineLabel}: ${input.lockDeadlineLabel}.`
+    return t.value.orderNoDraftStatus
   }
   if (input.placedAt) {
     return `${t.value.orderPlacedStatus} ${new Date(input.placedAt).toLocaleString(locale.value === 'fr' ? 'fr-CA' : 'en-CA')}.`
   }
-  if (input.isLocked) {
-    return `${t.value.orderLockedStatus} ${t.value.lockDeadlineLabel}: ${input.lockDeadlineLabel}.`
-  }
-  if (input.isLockDeadlinePassed) {
-    return t.value.deadlinePassed
-  }
-  return `${t.value.orderUnlockedStatus} ${t.value.lockDeadlineLabel}: ${input.lockDeadlineLabel}.`
+  return t.value.orderUnlockedStatus
 }
 
 const onQuickAdd = (productId: string) => {
@@ -289,6 +322,7 @@ const onQuickAdd = (productId: string) => {
 
   actions.quickAdd(productId)
   actions.enqueueToast(t.value.addedToCart)
+  void persistCartDraft()
 }
 
 const onAddToCart = (input: { productId: string; selectedOptions: Record<string, string>; quantity: number }) => {
@@ -297,6 +331,7 @@ const onAddToCart = (input: { productId: string; selectedOptions: Record<string,
   }
   actions.addToCart(input.productId, input.selectedOptions, input.quantity)
   actions.enqueueToast(t.value.addedToCart)
+  void persistCartDraft()
 }
 
 const onResetCart = () => {
@@ -304,6 +339,7 @@ const onResetCart = () => {
     return
   }
   actions.resetCart()
+  void persistCartDraft()
 }
 
 const onRemoveCartItem = (cartItemId: string) => {
@@ -311,6 +347,7 @@ const onRemoveCartItem = (cartItemId: string) => {
     return
   }
   actions.removeCartItem(cartItemId)
+  void persistCartDraft()
 }
 
 const onUpdateCartItemQuantity = (cartItemId: string, nextQuantity: number) => {
@@ -318,6 +355,7 @@ const onUpdateCartItemQuantity = (cartItemId: string, nextQuantity: number) => {
     return
   }
   actions.updateCartItemQuantity(cartItemId, nextQuantity)
+  void persistCartDraft()
 }
 
 const onContinueCheckout = () => {
@@ -325,6 +363,7 @@ const onContinueCheckout = () => {
     return
   }
 
+  actions.setCartOpen(false)
   currentView.value = 'confirmation'
 }
 
@@ -333,7 +372,12 @@ const onBackToCatalog = () => {
 }
 
 const onOpenDashboard = () => {
-  currentView.value = 'confirmation'
+  currentView.value = activeOrderConfirmedAt.value ? 'placed' : 'confirmation'
+}
+
+const onGoModifyOrder = () => {
+  showCenteredOrderToast.value = false
+  currentView.value = 'catalog'
 }
 
 const onBackFromAdminOrder = () => {
@@ -347,7 +391,7 @@ const onOpenAdminOrder = async (orderId: string) => {
 
   const orderResult = await neonClient
     .from('orders')
-    .select('id,subtotal,credit_used,credit_remaining,wallet_to_pay,is_locked,placed_at,lock_deadline_at')
+    .select('id,subtotal,credit_used,credit_remaining,wallet_to_pay,raw_payload')
     .eq('id', orderId)
     .single()
   if (orderResult.error || !orderResult.data) {
@@ -355,28 +399,43 @@ const onOpenAdminOrder = async (orderId: string) => {
     return
   }
 
+  const labelsByCartLineId = new Map<string, Record<string, string>>()
+  const rawPayload = (orderResult.data as { raw_payload?: unknown }).raw_payload
+  if (rawPayload && typeof rawPayload === 'object') {
+    const payloadItems = (rawPayload as Record<string, unknown>).items
+    if (Array.isArray(payloadItems)) {
+      for (const item of payloadItems) {
+        if (!item || typeof item !== 'object') {
+          continue
+        }
+        const casted = item as Record<string, unknown>
+        const id = typeof casted.id === 'string' ? casted.id : null
+        const labels =
+          casted.selectedOptionLabels && typeof casted.selectedOptionLabels === 'object'
+            ? (casted.selectedOptionLabels as Record<string, string>)
+            : null
+        if (!id || !labels) {
+          continue
+        }
+        labelsByCartLineId.set(id, labels)
+      }
+    }
+  }
+
   const itemsResult = await neonClient
     .from('order_items')
-    .select('id,product_id,product_name,quantity,line_total,selected_options')
+    .select('id,cart_line_id,product_id,product_name,quantity,line_total,selected_options')
     .eq('order_id', orderId)
   if (itemsResult.error) {
     actions.enqueueToast(t.value.orderSendFailed)
     return
   }
 
-  const lockDeadlineDate = new Date((orderResult.data as { lock_deadline_at: string }).lock_deadline_at)
-  const previewLockDeadlineLabel = lockDeadlineDate.toLocaleString(locale.value === 'fr' ? 'fr-CA' : 'en-CA', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  })
-  const previewIsLocked = Boolean((orderResult.data as { is_locked: boolean }).is_locked)
-  const previewPlacedAt = ((orderResult.data as { placed_at: string | null }).placed_at ?? null) as string | null
-  const previewIsDeadlinePassed = Date.now() >= lockDeadlineDate.getTime()
-
   adminSelectedOrderId.value = orderId
   adminPreview.value = {
     cartLines: ((itemsResult.data ?? []) as Array<{
       id: string
+      cart_line_id: string
       product_id: string
       product_name: string
       quantity: number
@@ -389,6 +448,7 @@ const onOpenAdminOrder = async (orderId: string) => {
         quantity: item.quantity,
         lineTotal: item.line_total,
         selectedOptions: (item.selected_options ?? {}) as Record<string, string>,
+        selectedOptionLabels: labelsByCartLineId.get(item.cart_line_id),
         product: {
           name: product?.name ?? { en: item.product_name, fr: item.product_name },
           imageGallery: product?.imageGallery,
@@ -401,15 +461,12 @@ const onOpenAdminOrder = async (orderId: string) => {
     creditUsed: Number((orderResult.data as { credit_used: string | number }).credit_used),
     creditRemaining: Number((orderResult.data as { credit_remaining: string | number }).credit_remaining),
     walletToPay: Number((orderResult.data as { wallet_to_pay: string | number }).wallet_to_pay),
-    isOrderLocked: previewIsLocked,
-    isLockDeadlinePassed: previewIsDeadlinePassed,
-    lockDeadlineLabel: previewLockDeadlineLabel,
+    isOrderLocked: false,
+    isLockDeadlinePassed: false,
+    lockDeadlineLabel: '',
     orderStatusMessage: buildOrderStatusMessage({
       activeOrderId: orderId,
-      placedAt: previewPlacedAt,
-      isLocked: previewIsLocked,
-      isLockDeadlinePassed: previewIsDeadlinePassed,
-      lockDeadlineLabel: previewLockDeadlineLabel,
+      placedAt: null,
     }),
   }
 
@@ -430,6 +487,7 @@ type OrderPayload = {
     unitPrice: number
     lineTotal: number
     selectedOptions: Record<string, string>
+    selectedOptionLabels: Record<string, string>
   }>
   totals: {
     subtotal: number
@@ -461,6 +519,23 @@ const getOrderPayload = (): OrderPayload => ({
     unitPrice: line.product.price,
     lineTotal: line.lineTotal,
     selectedOptions: line.selectedOptions,
+    selectedOptionLabels: Object.fromEntries(
+      (line.product.variantGroups ?? [])
+        .map((group) => {
+          const selectedOption = group.options.find(
+            (option) => option.id === line.selectedOptions[group.id],
+          )
+          if (!selectedOption) {
+            return null
+          }
+          return [group.label[locale.value], selectedOption.label[locale.value]] as const
+        })
+        .filter(
+          (
+            value,
+          ): value is readonly [string, string] => Array.isArray(value) && value.length === 2,
+        ),
+    ),
   })),
   totals: {
     subtotal: derived.subtotal.value,
@@ -469,6 +544,126 @@ const getOrderPayload = (): OrderPayload => ({
     walletToPay: derived.walletToPay.value,
   },
 })
+
+const persistCartDraft = async (showErrorToast = false, confirmSelection = false) => {
+  if (!sessionUser.value || isPersistingDraft.value) {
+    return false
+  }
+
+  isPersistingDraft.value = true
+  try {
+    if (derived.cartLines.value.length === 0) {
+      if (!activeOrderId.value) {
+        return true
+      }
+
+      const deleteOrder = await neonClient
+        .from('orders')
+        .delete()
+        .eq('id', activeOrderId.value)
+        .eq('user_id', sessionUser.value.id)
+      if (deleteOrder.error) {
+        throw deleteOrder.error
+      }
+
+      activeOrderId.value = null
+      activeOrderLocked.value = false
+      activeOrderPlacedAt.value = null
+      activeOrderConfirmedAt.value = null
+      return true
+    }
+
+    const payload = getOrderPayload()
+    const confirmedAt = confirmSelection ? new Date().toISOString() : null
+    const persistedPayload = {
+      ...payload,
+      confirmedAt,
+    }
+    let orderId = activeOrderId.value
+
+    if (!orderId) {
+      const insertOrder = await neonClient
+        .from('orders')
+        .insert({
+          id: crypto.randomUUID(),
+          request_id: payload.requestId,
+          submitted_at: payload.submittedAt,
+          user_id: sessionUser.value.id,
+          user_email: sessionUser.value.email,
+          locale: payload.locale,
+          item_count: payload.itemCount,
+          items_summary: payload.itemsSummary,
+          subtotal: payload.totals.subtotal,
+          credit_used: payload.totals.creditUsed,
+          credit_remaining: payload.totals.creditRemaining,
+          wallet_to_pay: payload.totals.walletToPay,
+          raw_payload: persistedPayload,
+        })
+        .select('id')
+        .single()
+
+      if (insertOrder.error) {
+        throw insertOrder.error
+      }
+
+      orderId = (insertOrder.data as { id: string }).id
+      activeOrderId.value = orderId
+    } else {
+      const updateOrder = await neonClient
+        .from('orders')
+        .update({
+          submitted_at: payload.submittedAt,
+          user_email: sessionUser.value.email,
+          locale: payload.locale,
+          item_count: payload.itemCount,
+          items_summary: payload.itemsSummary,
+          subtotal: payload.totals.subtotal,
+          credit_used: payload.totals.creditUsed,
+          credit_remaining: payload.totals.creditRemaining,
+          wallet_to_pay: payload.totals.walletToPay,
+          raw_payload: persistedPayload,
+        })
+        .eq('id', orderId)
+        .eq('user_id', sessionUser.value.id)
+      if (updateOrder.error) {
+        throw updateOrder.error
+      }
+    }
+
+    const deleteItems = await neonClient.from('order_items').delete().eq('order_id', orderId)
+    if (deleteItems.error) {
+      throw deleteItems.error
+    }
+
+    const insertItems = await neonClient.from('order_items').insert(
+      payload.items.map((item) => ({
+        id: crypto.randomUUID(),
+        order_id: orderId,
+        cart_line_id: item.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        line_total: item.lineTotal,
+        selected_options: item.selectedOptions,
+      })),
+    )
+    if (insertItems.error) {
+      throw insertItems.error
+    }
+
+    activeOrderConfirmedAt.value = confirmedAt
+    return true
+  } catch (error) {
+    console.error(error)
+    if (showErrorToast) {
+      actions.enqueueToast(t.value.orderSendFailed)
+    }
+    return false
+  } finally {
+    isPersistingDraft.value = false
+  }
+}
 
 type SessionUser = {
   id: string
@@ -509,12 +704,36 @@ const isPermissionDeniedError = (error: unknown, tableName: string) => {
   )
 }
 
+const isPolicyRecursionError = (error: unknown, tableName: string) => {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  const casted = error as PostgrestErrorLike
+  return (
+    casted.code === '42P17' &&
+    typeof casted.message === 'string' &&
+    casted.message.toLowerCase().includes(`relation "${tableName}"`.toLowerCase())
+  )
+}
+
 const warnMissingTableOnce = (tableName: string) => {
   if (missingTableWarnings.has(tableName)) {
     return
   }
   missingTableWarnings.add(tableName)
   console.warn(`Missing table public.${tableName}. Run database/neon-schema.sql to enable full features.`)
+}
+
+const warnPolicyRecursionOnce = (tableName: string) => {
+  const key = `policy-recursion:${tableName}`
+  if (missingTableWarnings.has(key)) {
+    return
+  }
+  missingTableWarnings.add(key)
+  console.warn(
+    `RLS policy recursion detected on ${tableName}. Fix policy in database/neon-schema.sql (drop/recreate admin_users_select).`,
+  )
 }
 
 const getDisplayNameFromEmail = (email: string | null, fallbackId: string) => {
@@ -583,6 +802,10 @@ const ensureUserProfile = async (user: SessionUser) => {
       warnMissingTableOnce('app_users')
       return
     }
+    if (isPolicyRecursionError(upsert.error, 'admin_users')) {
+      warnPolicyRecursionOnce('admin_users')
+      return
+    }
     throw upsert.error
   }
 }
@@ -597,6 +820,7 @@ const refreshSession = async () => {
     activeOrderId.value = null
     activeOrderLocked.value = false
     activeOrderPlacedAt.value = null
+    activeOrderConfirmedAt.value = null
     actions.replaceCart([])
     return
   }
@@ -605,6 +829,11 @@ const refreshSession = async () => {
 
   const adminCheck = await neonClient.from('admin_users').select('user_id').eq('user_id', user.id).limit(1)
   if (adminCheck.error) {
+    if (isPolicyRecursionError(adminCheck.error, 'admin_users')) {
+      warnPolicyRecursionOnce('admin_users')
+      isAdmin.value = user.isAdminClaim
+      return
+    }
     if (isMissingTableError(adminCheck.error, 'admin_users')) {
       warnMissingTableOnce('admin_users')
     } else {
@@ -624,7 +853,7 @@ const loadCurrentUserOrder = async () => {
 
   const orderResult = await neonClient
     .from('orders')
-    .select('id,is_locked,placed_at,lock_deadline_at')
+    .select('id,raw_payload')
     .eq('user_id', sessionUser.value.id)
     .limit(1)
 
@@ -632,56 +861,58 @@ const loadCurrentUserOrder = async () => {
     throw orderResult.error
   }
 
-  const order = (orderResult.data?.[0] as {
-    id: string
-    is_locked: boolean
-    placed_at: string | null
-    lock_deadline_at: string
-  } | undefined) ?? null
+  const order = (orderResult.data?.[0] as { id: string } | undefined) ?? null
 
   if (!order) {
     activeOrderId.value = null
     activeOrderLocked.value = false
     activeOrderPlacedAt.value = null
+    activeOrderConfirmedAt.value = null
     activeOrderLockDeadlineAt.value = '2026-03-02T00:00:00Z'
     actions.replaceCart([])
     return
   }
 
   activeOrderId.value = order.id
-  activeOrderLockDeadlineAt.value = order.lock_deadline_at
-
-  if (!order.placed_at && Date.now() >= new Date(order.lock_deadline_at).getTime()) {
-    const markPlaced = await neonClient
-      .from('orders')
-      .update({
-        is_locked: true,
-        locked_at: new Date().toISOString(),
-        placed_at: new Date().toISOString(),
-      })
-      .eq('id', order.id)
-      .eq('user_id', sessionUser.value.id)
-      .select('is_locked,placed_at')
-      .single()
-
-    if (!markPlaced.error && markPlaced.data) {
-      order.is_locked = (markPlaced.data as { is_locked: boolean }).is_locked
-      order.placed_at = (markPlaced.data as { placed_at: string | null }).placed_at
+  activeOrderLocked.value = false
+  activeOrderPlacedAt.value = null
+  const rawPayload = (orderResult.data?.[0] as { raw_payload?: unknown } | undefined)?.raw_payload
+  const labelsByCartLineId = new Map<string, Record<string, string>>()
+  if (rawPayload && typeof rawPayload === 'object') {
+    const confirmedAt = (rawPayload as Record<string, unknown>).confirmedAt
+    activeOrderConfirmedAt.value = typeof confirmedAt === 'string' && confirmedAt.length > 0 ? confirmedAt : null
+    const payloadItems = (rawPayload as Record<string, unknown>).items
+    if (Array.isArray(payloadItems)) {
+      for (const item of payloadItems) {
+        if (!item || typeof item !== 'object') {
+          continue
+        }
+        const casted = item as Record<string, unknown>
+        const id = typeof casted.id === 'string' ? casted.id : null
+        const labels =
+          casted.selectedOptionLabels && typeof casted.selectedOptionLabels === 'object'
+            ? (casted.selectedOptionLabels as Record<string, string>)
+            : null
+        if (!id || !labels) {
+          continue
+        }
+        labelsByCartLineId.set(id, labels)
+      }
     }
+  } else {
+    activeOrderConfirmedAt.value = null
   }
-
-  activeOrderLocked.value = order.is_locked
-  activeOrderPlacedAt.value = order.placed_at
 
   const itemsResult = await neonClient
     .from('order_items')
-    .select('product_id,quantity,selected_options')
+    .select('cart_line_id,product_id,quantity,selected_options')
     .eq('order_id', order.id)
   if (itemsResult.error) {
     throw itemsResult.error
   }
 
   const cartItems = ((itemsResult.data ?? []) as Array<{
+    cart_line_id: string
     product_id: string
     quantity: number
     selected_options: Record<string, string>
@@ -693,6 +924,7 @@ const loadCurrentUserOrder = async () => {
     productId: item.product_id,
     quantity: item.quantity,
     selectedOptions: (item.selected_options ?? {}) as Record<string, string>,
+    selectedOptionLabels: labelsByCartLineId.get(item.cart_line_id),
   }))
 
   actions.replaceCart(cartItems)
@@ -703,18 +935,7 @@ const ensureOrderEditable = () => {
     void onConnectGoogle()
     return false
   }
-
-  if (isOrderEditable.value) {
-    return true
-  }
-
-  if (isLockDeadlinePassed.value) {
-    actions.enqueueToast(t.value.cannotEditAfterDeadline)
-    return false
-  }
-
-  actions.enqueueToast(t.value.unlockBeforeEditing)
-  return false
+  return true
 }
 
 const onConnectGoogle = async () => {
@@ -744,6 +965,7 @@ const onSignOut = async () => {
     activeOrderId.value = null
     activeOrderLocked.value = false
     activeOrderPlacedAt.value = null
+    activeOrderConfirmedAt.value = null
     activeOrderLockDeadlineAt.value = '2026-03-02T00:00:00Z'
     actions.replaceCart([])
     currentView.value = 'catalog'
@@ -762,12 +984,19 @@ const loadAdminDashboard = async () => {
       .from('app_users')
       .select('user_id,email,display_name,created_at,last_seen_at')
       .order('last_seen_at', { ascending: false })
+    if (usersResult.error && isPolicyRecursionError(usersResult.error, 'admin_users')) {
+      warnPolicyRecursionOnce('admin_users')
+      adminUsers.value = []
+    }
     if (usersResult.error && !isMissingTableError(usersResult.error, 'app_users')) {
-      if (isPermissionDeniedError(usersResult.error, 'app_users')) {
+      if (isPolicyRecursionError(usersResult.error, 'admin_users')) {
+        // Continue loading orders even if app_users is blocked by recursive policy.
+      } else if (isPermissionDeniedError(usersResult.error, 'app_users')) {
         adminError.value = 'Database permission missing for app_users. Run database/neon-schema.sql grants in Neon.'
         return
+      } else {
+        throw usersResult.error
       }
-      throw usersResult.error
     }
     if (usersResult.error && isMissingTableError(usersResult.error, 'app_users')) {
       warnMissingTableOnce('app_users')
@@ -775,7 +1004,7 @@ const loadAdminDashboard = async () => {
 
     const ordersResult = await neonClient
       .from('orders')
-      .select('id,request_id,user_email,item_count,subtotal,created_at')
+      .select('id,user_id,user_email,item_count,subtotal,created_at')
       .order('created_at', { ascending: false })
     if (ordersResult.error) {
       if (isPermissionDeniedError(ordersResult.error, 'orders')) {
@@ -785,21 +1014,92 @@ const loadAdminDashboard = async () => {
       throw ordersResult.error
     }
 
-    adminUsers.value = ((usersResult.data ?? []) as Array<{
-      user_id: string
-      email: string
-      display_name: string
-      created_at: string
-      last_seen_at: string | null
-    }>)
-    adminOrders.value = (ordersResult.data ?? []) as Array<{
+    const orderItemsResult = await neonClient
+      .from('order_items')
+      .select('order_id,product_name,quantity,selected_options')
+    if (orderItemsResult.error) {
+      throw orderItemsResult.error
+    }
+
+    if (!usersResult.error) {
+      adminUsers.value = ((usersResult.data ?? []) as Array<{
+        user_id: string
+        email: string
+        display_name: string
+        created_at: string
+        last_seen_at: string | null
+      }>)
+    }
+    const usersById = new Map(
+      adminUsers.value.map((user) => [user.user_id, user.display_name]),
+    )
+    adminOrders.value = ((ordersResult.data ?? []) as Array<{
       id: string
-      request_id: string
+      user_id: string
       user_email: string | null
       item_count: number
       subtotal: string | number
       created_at: string
-    }>
+    }>).map((order) => ({
+      id: order.id,
+      user_name:
+        usersById.get(order.user_id) ??
+        (order.user_email?.split('@')[0] ?? '-'),
+      item_count: order.item_count,
+      subtotal: order.subtotal,
+      created_at: order.created_at,
+    }))
+
+    const itemSummaryMap = new Map<
+      string,
+      {
+        key: string
+        product_name: string
+        variants: string
+        total_quantity: number
+        order_ids: Set<string>
+      }
+    >()
+
+    ;((orderItemsResult.data ?? []) as Array<{
+      order_id: string
+      product_name: string
+      quantity: number
+      selected_options: Record<string, string> | null
+    }>).forEach((item) => {
+      const variantEntries = Object.entries(item.selected_options ?? {})
+        .filter(([, value]) => Boolean(value))
+        .sort(([a], [b]) => a.localeCompare(b))
+      const variants =
+        variantEntries.length > 0
+          ? variantEntries.map(([key, value]) => `${key}: ${value}`).join(' | ')
+          : 'Default'
+      const key = `${item.product_name}::${variants}`
+      const existing = itemSummaryMap.get(key)
+      if (existing) {
+        existing.total_quantity += item.quantity
+        existing.order_ids.add(item.order_id)
+        return
+      }
+
+      itemSummaryMap.set(key, {
+        key,
+        product_name: item.product_name,
+        variants,
+        total_quantity: item.quantity,
+        order_ids: new Set([item.order_id]),
+      })
+    })
+
+    adminItemsSummary.value = Array.from(itemSummaryMap.values())
+      .map((entry) => ({
+        key: entry.key,
+        product_name: entry.product_name,
+        variants: entry.variants,
+        total_quantity: entry.total_quantity,
+        order_count: entry.order_ids.size,
+      }))
+      .sort((a, b) => b.total_quantity - a.total_quantity)
   } catch (error) {
     adminError.value = error instanceof Error ? error.message : 'Failed to load admin data'
   } finally {
@@ -825,176 +1125,26 @@ const submitOrder = async () => {
   }
 
   isSubmittingOrder.value = true
-  const payload = getOrderPayload()
-
   try {
-    const sessionPayload = await neonClient.auth.getSession()
-    const sessionUser = getSessionUser(sessionPayload)
-    if (!sessionUser) {
-      await onConnectGoogle()
+    const shouldConfirm = !activeOrderConfirmedAt.value
+    const persisted = await persistCartDraft(true, shouldConfirm)
+    if (!persisted) {
       return
     }
 
-    let orderId = activeOrderId.value
-    if (!orderId) {
-      const insertOrder = await neonClient
-        .from('orders')
-        .insert({
-          id: crypto.randomUUID(),
-          request_id: payload.requestId,
-          submitted_at: payload.submittedAt,
-          user_id: sessionUser.id,
-          user_email: sessionUser.email,
-          locale: payload.locale,
-          item_count: payload.itemCount,
-          items_summary: payload.itemsSummary,
-          subtotal: payload.totals.subtotal,
-          credit_used: payload.totals.creditUsed,
-          credit_remaining: payload.totals.creditRemaining,
-          wallet_to_pay: payload.totals.walletToPay,
-          raw_payload: payload,
-          is_locked: false,
-          lock_deadline_at: activeOrderLockDeadlineAt.value,
-          placed_at: null,
-        })
-        .select('id')
-        .single()
-
-      if (insertOrder.error) {
-        throw insertOrder.error
-      }
-      orderId = (insertOrder.data as { id: string }).id
-      activeOrderId.value = orderId
+    if (shouldConfirm) {
+      showCenteredOrderToast.value = true
+      window.setTimeout(() => {
+        showCenteredOrderToast.value = false
+      }, 2200)
     } else {
-      const updateOrder = await neonClient
-        .from('orders')
-        .update({
-          request_id: payload.requestId,
-          submitted_at: payload.submittedAt,
-          user_email: sessionUser.email,
-          locale: payload.locale,
-          item_count: payload.itemCount,
-          items_summary: payload.itemsSummary,
-          subtotal: payload.totals.subtotal,
-          credit_used: payload.totals.creditUsed,
-          credit_remaining: payload.totals.creditRemaining,
-          wallet_to_pay: payload.totals.walletToPay,
-          raw_payload: payload,
-        })
-        .eq('id', orderId)
-      if (updateOrder.error) {
-        throw updateOrder.error
-      }
+      actions.enqueueToast(t.value.reopenOrder)
     }
 
-    const deleteItems = await neonClient.from('order_items').delete().eq('order_id', orderId)
-    if (deleteItems.error) {
-      throw deleteItems.error
-    }
-
-    if (payload.items.length > 0) {
-      const insertedItems = await neonClient.from('order_items').insert(
-        payload.items.map((item) => ({
-          id: crypto.randomUUID(),
-          order_id: orderId,
-          cart_line_id: item.id,
-          product_id: item.productId,
-          product_name: item.productName,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          line_total: item.lineTotal,
-          selected_options: item.selectedOptions,
-        })),
-      )
-      if (insertedItems.error) {
-        throw insertedItems.error
-      }
-    }
-
-    actions.enqueueToast(t.value.orderSent)
     await loadCurrentUserOrder()
-    currentView.value = 'catalog'
-  } catch (error) {
-    console.error(error)
-    actions.enqueueToast(t.value.orderSendFailed)
+    currentView.value = shouldConfirm ? 'placed' : 'confirmation'
   } finally {
     isSubmittingOrder.value = false
-  }
-}
-
-const onLockOrder = async () => {
-  if (!activeOrderId.value || !sessionUser.value || lockActionBusy.value) {
-    return
-  }
-  if (isLockDeadlinePassed.value) {
-    actions.enqueueToast(t.value.deadlinePassed)
-    return
-  }
-
-  lockActionBusy.value = true
-  try {
-    const response = await neonClient
-      .from('orders')
-      .update({
-        is_locked: true,
-        locked_at: new Date().toISOString(),
-        placed_at: new Date().toISOString(),
-      })
-      .eq('id', activeOrderId.value)
-      .eq('user_id', sessionUser.value.id)
-      .select('id')
-      .single()
-
-    if (response.error) {
-      throw response.error
-    }
-
-    activeOrderLocked.value = true
-    activeOrderPlacedAt.value = new Date().toISOString()
-    actions.enqueueToast(t.value.orderLockedStatus)
-  } catch (error) {
-    console.error(error)
-    actions.enqueueToast(t.value.orderSendFailed)
-  } finally {
-    lockActionBusy.value = false
-  }
-}
-
-const onUnlockOrder = async () => {
-  if (!activeOrderId.value || !sessionUser.value || lockActionBusy.value) {
-    return
-  }
-  if (isLockDeadlinePassed.value) {
-    actions.enqueueToast(t.value.deadlinePassed)
-    return
-  }
-
-  lockActionBusy.value = true
-  try {
-    const response = await neonClient
-      .from('orders')
-      .update({
-        is_locked: false,
-        locked_at: null,
-        placed_at: null,
-      })
-      .eq('id', activeOrderId.value)
-      .eq('user_id', sessionUser.value.id)
-      .select('id')
-      .single()
-
-    if (response.error) {
-      throw response.error
-    }
-
-    activeOrderLocked.value = false
-    activeOrderPlacedAt.value = null
-    actions.enqueueToast(t.value.orderUnlockedStatus)
-  } catch (error) {
-    console.error(error)
-    actions.enqueueToast(t.value.orderSendFailed)
-  } finally {
-    lockActionBusy.value = false
   }
 }
 

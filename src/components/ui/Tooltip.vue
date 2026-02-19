@@ -13,7 +13,7 @@
       <TooltipContent
         side="top"
         :side-offset="8"
-        class="max-w-80 rounded-md border px-3 py-2 text-xs leading-relaxed"
+        class="max-w-80 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm leading-relaxed text-zinc-50 shadow-xl"
       >
         {{ content }}
       </TooltipContent>

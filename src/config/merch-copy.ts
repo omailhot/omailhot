@@ -296,7 +296,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 		creditUsed: "Crédit comité social utilisé",
 		creditRemaining: "Crédit comité social restant",
 		creditCommitteeTooltip:
-			"Pour terminer l'année (fiscale) en beauté, nous souhaitons offrir aux employés jusqu'à 250 $ de crédit magasin pour acheter de la merch Propulso. Le montant excédant sera facturé au moment de la commande.",
+			"Pour terminer l'année (fiscale) en beauté, nous offrons aux employés jusqu'à 250$ de crédit magasin pour acheter de la merch Propulso. Le montant excédant sera facturé au moment de la commande.",
 		walletToPay: "Depuis votre portefeuille",
 		settingsTitle: "Paramètres",
 		settingOrderUpdates: "E-mails de statut de commande",

@@ -20,9 +20,9 @@
   />
 
   <main
-    class="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_14%_6%,rgba(255,160,0,0.23),transparent_34%),radial-gradient(circle_at_75%_0%,rgba(255,0,53,0.16),transparent_35%)] pb-24 xl:pb-6"
+    class="min-h-[calc(100vh-4rem)] overflow-x-clip bg-[radial-gradient(circle_at_14%_6%,rgba(255,160,0,0.23),transparent_34%),radial-gradient(circle_at_75%_0%,rgba(255,0,53,0.16),transparent_35%)] pb-24 xl:pb-6"
   >
-    <div class="mx-auto max-w-[96rem] px-4 py-6 sm:px-6">
+    <div class="mx-auto min-w-0 max-w-[96rem] px-4 py-6 sm:px-6">
       <div v-if="currentView === 'admin'">
         <AdminDashboard
           :t="t"
@@ -174,7 +174,10 @@
     @add-to-cart="onAddToCart"
   />
 
-  <Toaster position="bottom-right" />
+  <Toaster
+    position="bottom-right"
+    :mobile-offset="{ bottom: '6rem', right: '1rem', left: '1rem' }"
+  />
 
   <div
     v-if="showOverwriteModal"

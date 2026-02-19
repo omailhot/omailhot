@@ -1,8 +1,10 @@
 <template>
   <section class="mt-5 space-y-4">
     <Card class="px-4 sm:px-6">
-      <CardHeader class="flex flex-row items-center justify-between px-0">
-        <div class="flex items-center gap-2">
+      <CardHeader
+        class="flex flex-col items-stretch justify-between gap-3 px-0 sm:flex-row sm:items-center"
+      >
+        <div class="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             :variant="activeTab === 'orders' ? 'default' : 'outline'"
@@ -18,7 +20,7 @@
             Articles à commander
           </Button>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           <Button
             v-if="activeTab === 'items'"
             size="sm"

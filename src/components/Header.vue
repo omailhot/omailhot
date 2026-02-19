@@ -19,7 +19,7 @@
           <p class="truncate font-semibold tracking-tight">
             {{ title ?? m.header_name() }}
           </p>
-          <p class="text-muted-foreground truncate text-xs">
+          <p class="text-muted-foreground hidden truncate text-xs sm:block">
             {{ subtitle ?? m.header_subtitle() }}
           </p>
         </div>

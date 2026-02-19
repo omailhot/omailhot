@@ -41,12 +41,12 @@
                   ]"
                 />
               </div>
-              <div
-                class="flex min-w-0 flex-1 items-start justify-between gap-3"
-              >
+              <div class="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="min-w-0">
-                  <p class="font-medium">{{ line.product.name[locale] }}</p>
-                  <p class="text-muted-foreground mt-1 text-xs">
+                  <p class="font-medium break-words">
+                    {{ line.product.name[locale] }}
+                  </p>
+                  <p class="text-muted-foreground mt-1 break-words text-xs">
                     {{ t.variants }}:
                     {{ getVariantLabels(line).join(" | ") || t.noVariants }}
                   </p>
@@ -54,15 +54,15 @@
                     {{ t.quantity }}: {{ line.quantity }}
                   </p>
                 </div>
-                <div class="flex shrink-0 flex-col items-end gap-2">
+                <div class="flex flex-col items-start gap-2 sm:items-end">
                   <p class="font-semibold">
                     {{ formatCurrency.format(line.lineTotal) }}
                   </p>
-                  <div v-if="!isReadOnly" class="flex flex-col items-end gap-2">
+                  <div v-if="!isReadOnly" class="flex flex-col items-start gap-2 sm:items-end">
                     <div
                       v-for="group in line.product.variantGroups ?? []"
                       :key="`${line.id}-${group.id}`"
-                      class="flex flex-wrap justify-end gap-1"
+                      class="flex flex-wrap gap-1 sm:justify-end"
                     >
                       <Button
                         v-for="option in group.options"
@@ -290,5 +290,4 @@ const updateVariantSelection = (
   emit("update-item-variants", line.id, nextSelectedOptions);
 };
 </script>
-
 

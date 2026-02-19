@@ -1,7 +1,9 @@
 <template>
   <section class="mt-5">
     <Card class="shadow-md">
-      <CardHeader class="flex flex-row items-center justify-between gap-3">
+      <CardHeader
+        class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
+      >
         <div>
           <CardTitle>Order details</CardTitle>
           <CardDescription>Admin view of submitted items</CardDescription>
@@ -45,12 +47,12 @@
                   ]"
                 />
               </div>
-              <div
-                class="flex min-w-0 flex-1 items-start justify-between gap-3"
-              >
-                <div>
-                  <p class="font-medium">{{ line.product.name[locale] }}</p>
-                  <p class="text-muted-foreground mt-1 text-xs">
+              <div class="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0">
+                  <p class="font-medium break-words">
+                    {{ line.product.name[locale] }}
+                  </p>
+                  <p class="text-muted-foreground mt-1 break-words text-xs">
                     {{ t.variants }}:
                     {{ getVariantLabels(line).join(" | ") || t.noVariants }}
                   </p>
@@ -58,7 +60,7 @@
                     {{ t.quantity }}: {{ line.quantity }}
                   </p>
                 </div>
-                <p class="font-semibold">
+                <p class="shrink-0 font-semibold">
                   {{ formatCurrency.format(line.lineTotal) }}
                 </p>
               </div>

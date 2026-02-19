@@ -1,9 +1,13 @@
 ﻿<template>
-  <section class="ml-auto mr-auto mt-5 flex min-h-[calc(80vh-12rem)] w-full max-w-7xl flex-col items-center justify-center gap-6 px-4">
-    <Card class="mx-auto max-w-xl shadow-md">
+  <section
+    class="ml-auto mr-auto mt-5 flex min-h-[calc(80vh-12rem)] w-full max-w-7xl flex-col items-center justify-center gap-6 px-4"
+  >
+    <Card class="mx-auto w-full max-w-md shadow-md">
       <CardHeader class="text-center">
         <CardTitle class="text-center">{{ t.placedPageTitle }}</CardTitle>
-        <CardDescription class="mx-auto max-w-x">{{ t.placedPageBody }}</CardDescription>
+        <CardDescription class="mx-auto max-w-sm">{{
+          t.placedPageBody
+        }}</CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">
         <div v-if="recapLines.length > 0" class="rounded-xl border bg-muted/20 p-3">
@@ -31,10 +35,12 @@
                   />
                 </div>
                 <div class="min-w-0">
-                  <p>{{ line.product.name[locale] }} x{{ line.quantity }}</p>
+                  <p class="break-words">
+                    {{ line.product.name[locale] }} x{{ line.quantity }}
+                  </p>
                   <p
                     v-if="getVariantSummary(line).length > 0"
-                    class="text-xs text-muted-foreground/90"
+                    class="text-xs break-words text-muted-foreground/90"
                   >
                     {{ getVariantSummary(line).join(" · ") }}
                   </p>
@@ -48,7 +54,7 @@
         </div>
         <div
           :class="[
-            'mx-auto grid w-xl max-w-md gap-2',
+            'mx-auto grid w-full max-w-md gap-2',
             viewOnly ? 'grid-cols-1' : 'sm:grid-cols-2',
           ]"
         >
@@ -69,7 +75,6 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-
 import Button from "@/components/ui/Button.vue";
 import Card from "@/components/ui/Card.vue";
 import CardContent from "@/components/ui/CardContent.vue";

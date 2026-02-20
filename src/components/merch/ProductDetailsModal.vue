@@ -167,10 +167,10 @@ const variantImageGallery = computed(() => {
       }
       if (groupId.includes("image")) {
         if (selected === "logo") {
-          return normalized.includes("logo") || normalized.includes("_1.");
+          return normalized.includes("logo") || normalized.includes("_2.");
         }
         if (selected === "rocket") {
-          return normalized.includes("rocket") || normalized.includes("_2.");
+          return normalized.includes("rocket") || normalized.includes("_1.");
         }
         return normalized.includes(selected);
       }

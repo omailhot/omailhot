@@ -254,6 +254,8 @@ export const products: Product[] = [
       '/merch/yeti_black_2.png',
       '/merch/yeti_red_1.png',
       '/merch/yeti_red_2.png',
+      '/merch/yeti-rambler-model-1.png',
+      '/merch/yeti-rambler-model-2.png',
     ],
     variantGroups: [
       {
@@ -285,7 +287,7 @@ export const products: Product[] = [
           {
             id: 'rocket',
             label: { en: 'Fusée', fr: 'Fusée' },
-          }
+          },
         ],
       }
     ],
@@ -295,7 +297,7 @@ export const products: Product[] = [
     },
     description: {
       en: '',
-      fr: 'Gobelet 295 ML AVEC COUVERCLE MAGSLIDER™',
+      fr: 'Gobelet 10 OZ/295 ML AVEC COUVERCLE MAGSLIDER™. 4 combinaisons possibles, assurez-vous de choisir la couleur et l\'image de votre choix.',
     },
   },
   {
@@ -308,6 +310,8 @@ export const products: Product[] = [
       '/merch/yeti_black_2.png',
       '/merch/yeti_red_1.png',
       '/merch/yeti_red_2.png',
+      '/merch/yeti-rambler-model-1.png',
+      '/merch/yeti-rambler-model-2.png',
     ],
     variantGroups: [
       {
@@ -339,7 +343,7 @@ export const products: Product[] = [
           {
             id: 'rocket',
             label: { en: 'Fusée', fr: 'Fusée' },
-          }
+          },
         ],
       }
     ],
@@ -349,7 +353,7 @@ export const products: Product[] = [
     },
     description: {
       en: '',
-      fr: 'Gobelet 591 ML AVEC COUVERCLE MAGSLIDER™',
+      fr: 'Gobelet 20 OZ/591 ML AVEC COUVERCLE MAGSLIDER™. 4 combinaisons possibles, assurez-vous de choisir la couleur et l\'image de votre choix.',
     },
   },
   {
@@ -513,7 +517,7 @@ export const products: Product[] = [
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     imageGallery: [
-      '/merch/saq.png'
+      '/merch/carte-cadeau-saq.png',
     ],
     name: {
       en: 'SAQ gift card',
@@ -530,7 +534,7 @@ export const products: Product[] = [
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     imageGallery: [
-      '/merch/chocolat-favoris.png'
+      '/merch/carte-cadeau-chocolat-favoris.png',
     ],
     name: {
       en: 'Chocolat Favoris gift card',
@@ -547,7 +551,7 @@ export const products: Product[] = [
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     imageGallery: [
-      '/merch/shop-santé.png'
+      '/merch/carte-cadeau-shop-sante.png',
     ],
     name: {
       en: 'Shop Sante gift card',
@@ -564,7 +568,7 @@ export const products: Product[] = [
     price: 15,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     imageGallery: [
-      '/merch/pasta-fumo.png'
+      '/merch/carte-cadeau-pasta-fumo.png',
     ],
     name: {
       en: 'Pasta Fumo gift card',
@@ -581,7 +585,7 @@ export const products: Product[] = [
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     imageGallery: [
-      '/merch/bureau-en-gros.png'
+      '/merch/carte-cadeau-bureau-en-gros.png',
     ],
     name: {
       en: 'Bureau en Gros gift card',

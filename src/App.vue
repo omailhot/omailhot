@@ -69,11 +69,9 @@
             class="mt-3 rounded-xl border border-red-200/70 bg-white/65 px-3 py-2 text-sm leading-relaxed text-red-950 dark:border-red-300/35 dark:bg-black/25 dark:text-red-100"
           >
             <span class="font-semibold"
-              >Date maximale de commande: 1 mars 2026.</span
+              >Date limite pour commander: 1 mars 2026.</span
             >
-            Si le crédit n'est pas utilisé en entier avant cette date, il est
-            perdu et non transférable à la prochaine édition, non monnayable et
-            non remboursable.
+            Le crédit restant est non transférable à la prochaine édition, non monnayable et non remboursable.
           </p>
         </div>
         <div

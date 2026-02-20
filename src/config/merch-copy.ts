@@ -369,7 +369,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			"Voulez-vous effacer votre commande existante ou la consulter?",
 		overwriteOrderAction: "Effacer la commande",
 		policy:
-			"Propulso applique d'abord 250 $ de Crédit comité social, puis le reste est payé depuis votre portefeuille personnel.",
+			"Propulso applique d'abord 250 $ de Crédit comité social, puis la balance est payé depuis votre portefeuille personnel.",
 		viewOnlyEnable: "Activer lecture seule",
 		viewOnlyDisable: "Désactiver lecture seule",
 		viewOnlyBadge: "Mode lecture activé",
@@ -381,8 +381,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 		billablePerPerson: "Facturable",
 		giftCardOutOfRange:
 			"Le montant de carte cadeau doit être entre 25 $ et 250 $.",
-		giftCardQuantityLimit: "Limite: 1 par carte cadeau",
+		giftCardQuantityLimit: "Limite: 1 par carte-cadeau",
 		giftCardLimitReached:
-			"Cette carte cadeau est deja dans votre panier. La quantite maximale est 1.",
+			"Cette carte-cadeau est deja dans votre panier. La quantite maximale est 1.",
 	},
 };

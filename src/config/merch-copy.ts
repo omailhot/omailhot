@@ -330,8 +330,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			"Vérifiez les articles et les quantités avant confirmation.",
 		itemsToOrder: "Mon panier",
 		confirmationTitle: "Confirmation de la commande",
-		confirmationSubtitle: "Résumé avant validation finale.",
-		confirmationText: "Verouiller votre panier pour confirmer votre commande. Vous pouvez à tout moment, avant la date limite, dé-vérouiller votre commande pour la modifier. Seuls les articles d'une commande verouillée seront considérés dans la commande finale.",
+		confirmationSubtitle: "Résumé avant la validation finale.",
+		confirmationText: "Verrouillez votre panier pour confirmer votre commande. Vous pouvez à tout moment, avant la date limite, déverouiller votre commande pour la modifier. Seuls les articles d'une commande verrouillée seront considérés dans la commande finale.",
 		invoiceLater: "Montant facturé plus tard",
 		invoiceExplanation: "Tout montant au-delà du Crédit comité social vous sera facturé après approbation interne.",
 		backToCatalog: "Retour au catalogue",
@@ -351,8 +351,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			"La date limite du 1er mars est passée. La commande ne peut plus être modifiée.",
 		unlockBeforeEditing:
 			"La commande est verrouillée. Déverrouillez-la pour modifier.",
-		lockOrder: "Verrouiller la commande",
-		unlockOrder: "Déverrouiller la commande",
+		lockOrder: "Verrouiller ma commande",
+		unlockOrder: "Déverrouiller ma commande",
 		lockExplanationTitle: "Verrouillage avant la date limite",
 		lockExplanationBody:
 			"Verrouillez votre commande avant le 1er mars. Si elle n'est pas verrouillée, la sélection actuelle sera quand même placée automatiquement le 1er mars.",

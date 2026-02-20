@@ -11,7 +11,7 @@
       </CardHeader>
       <CardContent class="space-y-4">
         <div v-if="recapLines.length > 0" class="rounded-xl border bg-muted/20 p-3">
-          <p class="mb-2 text-sm font-medium">Resume des articles commandes</p>
+          <p class="mb-2 text-sm font-medium">Résumé des articles commandés</p>
           <ul class="space-y-2 text-sm text-muted-foreground">
             <li v-for="line in recapLines" :key="line.id">
               <div class="flex items-start gap-2">
@@ -36,7 +36,7 @@
                 </div>
                 <div class="min-w-0">
                   <p class="break-words">
-                    {{ line.product.name[locale] }} x{{ line.quantity }}
+                    {{ line.product.name[locale] }} (Qté: {{ line.quantity }})
                   </p>
                   <p
                     v-if="getVariantSummary(line).length > 0"

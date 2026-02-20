@@ -1,6 +1,6 @@
 export type StoreLocale = 'en' | 'fr'
 
-export type Category = 'wearables' | 'desk' | 'travel' | 'lifestyle'
+export type Category = 'wearables' | 'desk' | 'travel' | 'lifestyle' | 'giftcard'
 
 export type ProductVariantOption = {
   id: string

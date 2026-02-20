@@ -6,7 +6,8 @@
 
 body {
   @apply m-0;
-  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background);
@@ -18,8 +19,12 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 1.65rem;
 }
 
 :root {

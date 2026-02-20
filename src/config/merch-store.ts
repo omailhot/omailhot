@@ -8,6 +8,7 @@ export const categoryOrder: Array<"all" | Category> = [
 	"desk",
 	"travel",
 	"lifestyle",
+  "giftcard"
 ];
 
 export const products: Product[] = [
@@ -415,7 +416,7 @@ export const products: Product[] = [
     ],
     name: {
       en: '',
-      fr: 'Trop de sous-verres',
+      fr: 'Trio de sous-verres',
     },
     description: {
       en: '',
@@ -442,7 +443,7 @@ export const products: Product[] = [
   },
   {
     id: 'giftcard-saq',
-    category: 'lifestyle',
+    category: 'giftcard',
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     name: {
@@ -456,7 +457,7 @@ export const products: Product[] = [
   },
   {
     id: 'giftcard-chocolat-favoris',
-    category: 'lifestyle',
+    category: 'giftcard',
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     name: {
@@ -470,7 +471,7 @@ export const products: Product[] = [
   },
   {
     id: 'giftcard-shop-sante',
-    category: 'lifestyle',
+    category: 'giftcard',
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     name: {
@@ -484,8 +485,8 @@ export const products: Product[] = [
   },
   {
     id: 'giftcard-Pasta-Fumo',
-    category: 'lifestyle',
-    price: 10,
+    category: 'giftcard',
+    price: 15,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     name: {
       en: 'Pasta Fumo gift card',
@@ -498,7 +499,7 @@ export const products: Product[] = [
   },
   {
     id: 'giftcard-bureau-en-gros',
-    category: 'lifestyle',
+    category: 'giftcard',
     price: 10,
     gradientClass: 'from-zinc-200/60 via-zinc-100/40 to-transparent',
     name: {

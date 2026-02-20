@@ -15,7 +15,7 @@
           :alt="product.name[locale]"
           :image-gallery="product.imageGallery"
           :gradient-class="product.gradientClass"
-          class-name="mb-4 h-40"
+          class-name="mb-4 h-80"
         />
 
         <div class="flex items-start justify-between gap-3">

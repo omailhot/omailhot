@@ -50,6 +50,19 @@
           </p>
         </div>
         <div
+          class="border-border/70 mb-4 flex flex-col gap-3 rounded-2xl border bg-[linear-gradient(135deg,rgba(255,160,0,0.18),rgba(255,0,53,0.14))] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-[linear-gradient(135deg,rgba(255,160,0,0.24),rgba(255,0,53,0.2))]"
+        >
+          <div>
+            <p class="text-foreground">
+              Pour inaugurer cette première édition, un crédit est offert pour chaque employé au montant de 250$ par personne, utilisable pour cette édition seulement. Les prix de tous les produits incluent déjà les taxes.
+            </p>
+            <br>
+            <p class="text-foreground">
+              <b>La date maximale pour commander est le 1er mars 2026.</b> Si le crédit n’est pas utilisé en entièreté avant la cette date, ce crédit est perdu et non transférable à la prochaine édition, non monnayable, non remboursable.
+            </p>
+          </div>
+        </div>
+        <div
           v-if="!sessionUser"
           class="border-border/70 mb-4 flex flex-col gap-3 rounded-2xl border bg-[linear-gradient(135deg,rgba(255,160,0,0.18),rgba(255,0,53,0.14))] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-[linear-gradient(135deg,rgba(255,160,0,0.24),rgba(255,0,53,0.2))]"
         >

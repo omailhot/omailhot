@@ -120,7 +120,7 @@
               <tr>
                 <th class="py-2 pr-3">Article</th>
                 <th class="py-2 pr-3">Variantes</th>
-                <th class="py-2 pr-3">Qté</th>
+                <th class="py-2 pr-3">Quantité</th>
                 <th class="py-2">Commandes</th>
               </tr>
             </thead>

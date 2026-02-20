@@ -160,6 +160,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			desk: "Desk",
 			travel: "Travel",
 			lifestyle: "Lifestyle",
+			giftcard: "Giftcard",
 		},
 		profileTitle: "User Profile",
 		profileSubtitle: "Manage your account and wallet.",
@@ -246,8 +247,8 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			"This gift card is already in your cart. Maximum quantity is 1.",
 	},
 	fr: {
-		appTitle: "PropulShop",
-		appSubtitle: "Boutique interne",
+		appTitle: "La shop Propulso",
+		appSubtitle: "Le comité social est fier de vous présenter le catalogue pour la première édition du Shop Propulso.",
 		landingBadge: "Boutique équipe",
 		landingTitle: "Expérience merch premium pour chaque employé",
 		landingDescription:
@@ -279,7 +280,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 		quickAdd: "Ajout rapide",
 		addedToCart: "Ajouté au panier",
 		perItem: "par article",
-		quantity: "Qté",
+		quantity: "Quantité",
 		variant: "Variante",
 		variants: "Variantes",
 		noVariants: "Option par défaut",
@@ -292,6 +293,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			desk: "Bureau",
 			travel: "Voyage",
 			lifestyle: "Style de vie",
+			giftcard: "Carte-cadeau"
 		},
 		profileTitle: "Profil utilisateur",
 		profileSubtitle: "Gérez votre compte et votre portefeuille.",
@@ -306,7 +308,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 		creditUsed: "Crédit comité social utilisé",
 		creditRemaining: "Crédit comité social restant",
 		creditCommitteeTooltip:
-			"Pour terminer l'année (fiscale) en beauté, nous offrons aux employés jusqu'à 250$ de crédit magasin pour acheter de la merch Propulso. Le montant excédant sera facturé au moment de la commande.",
+			"Pour inaugurer cette première édition du Shop Propulso en beauté, nous offrons aux employés jusqu'à 250$ de crédit magasin pour acheter des produits à l'effigie de Propulso. Le montant excédant sera facturé au moment de la commande.",
 		walletToPay: "Depuis votre portefeuille",
 		settingsTitle: "Paramètres",
 		settingOrderUpdates: "E-mails de statut de commande",

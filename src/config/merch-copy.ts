@@ -248,7 +248,7 @@ export const merchCopy: Record<StoreLocale, MerchCopy> = {
 			"This gift card is already in your cart. Maximum quantity is 1.",
 	},
 	fr: {
-		appTitle: "La shop Propulso",
+		appTitle: "Shop Propulso",
 		appSubtitle: "",
 		landingBadge: "Boutique équipe",
 		landingTitle: "Expérience merch premium pour chaque employé",

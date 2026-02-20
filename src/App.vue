@@ -50,18 +50,8 @@
           </p>
         </div>
         <div
-          v-if="showWelcomeBanner"
           class="border-border/80 relative mb-4 overflow-hidden rounded-2xl border bg-[radial-gradient(circle_at_10%_15%,rgba(255,210,120,0.42),transparent_45%),radial-gradient(circle_at_92%_8%,rgba(255,118,140,0.34),transparent_42%),linear-gradient(120deg,rgba(255,248,226,0.94),rgba(255,236,224,0.94))] p-5 shadow-md dark:border-amber-200/20 dark:bg-[radial-gradient(circle_at_10%_15%,rgba(255,170,70,0.2),transparent_45%),radial-gradient(circle_at_92%_8%,rgba(255,90,120,0.2),transparent_42%),linear-gradient(125deg,rgba(51,30,20,0.95),rgba(45,22,18,0.95))]"
         >
-          <Button
-            variant="ghost"
-            size="icon"
-            class="absolute top-3 right-3 h-7 w-7 rounded-full"
-            aria-label="Fermer la bannière de bienvenue"
-            @click="closeWelcomeBanner"
-          >
-            <X class="size-4" />
-          </Button>
           <p
             class="mb-3 mx-auto inline-flex w-fit rounded-full border border-amber-300/60 bg-amber-100/75 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide uppercase text-amber-900 dark:border-amber-300/35 dark:bg-amber-400/15 dark:text-amber-100"
           >
@@ -282,7 +272,7 @@
 </template>
 
 <script setup lang="ts">
-import { ShoppingBasket, X } from "lucide-vue-next";
+import { ShoppingBasket } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 import Header from "@/components/Header.vue";
@@ -330,13 +320,11 @@ const currentView = ref<
 >("catalog");
 const VIEW_SESSION_KEY = "propulshop-current-view";
 const VIEW_ONLY_SESSION_KEY = "propulshop-view-only";
-const WELCOME_BANNER_SESSION_KEY = "propulshop-welcome-banner-hidden";
 const isSubmittingOrder = ref(false);
 const showOverwriteModal = ref(false);
 const lockActionBusy = ref(false);
 const authBusy = ref(true);
 const isViewOnly = ref(false);
-const showWelcomeBanner = ref(true);
 const sessionUser = ref<SessionUser | null>(null);
 const isAdmin = ref(false);
 const adminUsers = ref<
@@ -626,13 +614,6 @@ const onContinueCheckout = () => {
 
 const onBackToCatalog = () => {
   currentView.value = "catalog";
-};
-
-const closeWelcomeBanner = () => {
-  showWelcomeBanner.value = false;
-  if (typeof window !== "undefined") {
-    window.sessionStorage.setItem(WELCOME_BANNER_SESSION_KEY, "1");
-  }
 };
 
 const onUnlockAndBackToCatalog = async () => {
@@ -1741,8 +1722,6 @@ onMounted(async () => {
     }
     isViewOnly.value =
       window.sessionStorage.getItem(VIEW_ONLY_SESSION_KEY) === "1";
-    showWelcomeBanner.value =
-      window.sessionStorage.getItem(WELCOME_BANNER_SESSION_KEY) !== "1";
   }
 
   if (window.location.hostname === "127.0.0.1") {

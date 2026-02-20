@@ -13,6 +13,72 @@ export const categoryOrder: Array<"all" | Category> = [
 
 export const products: Product[] = [
   {
+    id: 'black-hoodie',
+    category: 'wearables',
+    price: 65,
+    gradientClass: 'from-amber-300/35 via-orange-400/25 to-red-500/20',
+    imageGallery: [
+      '/merch/hoodie-noir.png'
+    ],
+    variantGroups: [
+      {
+        id: 'size',
+        label: { en: 'Size', fr: 'Taille' },
+        type: 'size',
+        options: [
+          { id: 'xs', label: { en: 'XS', fr: 'XS' } },
+          { id: 's', label: { en: 'S', fr: 'S' } },
+          { id: 'm', label: { en: 'M', fr: 'M' } },
+          { id: 'l', label: { en: 'L', fr: 'L' } },
+          { id: 'xl', label: { en: 'XL', fr: 'XL' } },
+          { id: '2xl', label: { en: '2XL', fr: '2XL' } },
+          { id: '3xl', label: { en: '3XL', fr: '3XL' } },
+        ],
+      },
+    ],
+    name: {
+      en: '',
+      fr: 'Hoodie noir',
+    },
+    description: {
+      en: '',
+      fr: 'Vous avez manqué votre chance d\'obtenir un hoodie dans cette couleur? C\'est votre occasion de mettre la main dessus!',
+    },
+  },
+  {
+    id: 'beige-hoodie',
+    category: 'wearables',
+    price: 65,
+    gradientClass: 'from-amber-300/35 via-orange-400/25 to-red-500/20',
+    imageGallery: [
+      '/merch/hoodie-beige.png'
+    ],
+    variantGroups: [
+      {
+        id: 'size',
+        label: { en: 'Size', fr: 'Taille' },
+        type: 'size',
+        options: [
+          { id: 'xs', label: { en: 'XS', fr: 'XS' } },
+          { id: 's', label: { en: 'S', fr: 'S' } },
+          { id: 'm', label: { en: 'M', fr: 'M' } },
+          { id: 'l', label: { en: 'L', fr: 'L' } },
+          { id: 'xl', label: { en: 'XL', fr: 'XL' } },
+          { id: '2xl', label: { en: '2XL', fr: '2XL' } },
+          { id: '3xl', label: { en: '3XL', fr: '3XL' } },
+        ],
+      },
+    ],
+    name: {
+      en: '',
+      fr: 'Hoodie beige',
+    },
+    description: {
+      en: '',
+      fr: 'Vous avez manqué votre chance d\'obtenir un hoodie dans cette couleur? C\'est votre occasion de mettre la main dessus!',
+    },
+  },
+  {
     id: 'black-t-shirt-men',
     category: 'wearables',
     price: 40,
@@ -75,39 +141,6 @@ export const products: Product[] = [
     description: {
       en: '',
       fr: 'T-shirt 100% coton doux avec signature minimaliste imprimée sur le coeur.',
-    },
-  },
-  {
-    id: 'black-t-shirt-kids',
-    category: 'wearables',
-    price: 21,
-    gradientClass: 'from-amber-300/35 via-orange-400/25 to-red-500/20',
-    imageGallery: [
-      '/merch/printeez-tshirt-enfant.png',
-      '/merch/printeez-youth-shirt-model.png',
-      '/merch/size-guide-printeez-youth-shirt.png',
-    ],
-    variantGroups: [
-      {
-        id: 'size',
-        label: { en: 'Size', fr: 'Taille' },
-        type: 'size',
-        options: [
-          { id: 'xs', label: { en: 'XS', fr: 'XS' } },
-          { id: 'sm', label: { en: 'S', fr: 'S' } },
-          { id: 'm', label: { en: 'M', fr: 'M' } },
-          { id: 'l', label: { en: 'L', fr: 'L' } },
-          { id: 'xl', label: { en: 'XL', fr: 'XL' } }
-        ],
-      },
-    ],
-    name: {
-      en: '',
-      fr: 'T-shirt noir enfant',
-    },
-    description: {
-      en: '',
-      fr: 'Imprimé en couleur sur un t-shirt pour jeunes 100 % coton pour un confort incroyable.',
     },
   },
   {
@@ -176,6 +209,39 @@ export const products: Product[] = [
     description: {
       en: 'Layer-ready top for hybrid work and travel.',
       fr: 'Coquille extérieure : 100% polyesteré. Matériau isolant : 90% duvet de canard, 10% plumes. Isolante et résistante à l’eau. Deux grandes poches avant avec fermeture à glissière. Deux poches intérieures avec fermeture à glissière.',
+    },
+  },
+    {
+    id: 'black-t-shirt-kids',
+    category: 'wearables',
+    price: 21,
+    gradientClass: 'from-amber-300/35 via-orange-400/25 to-red-500/20',
+    imageGallery: [
+      '/merch/printeez-tshirt-enfant.png',
+      '/merch/printeez-youth-shirt-model.png',
+      '/merch/size-guide-printeez-youth-shirt.png',
+    ],
+    variantGroups: [
+      {
+        id: 'size',
+        label: { en: 'Size', fr: 'Taille' },
+        type: 'size',
+        options: [
+          { id: 'xs', label: { en: 'XS', fr: 'XS' } },
+          { id: 'sm', label: { en: 'S', fr: 'S' } },
+          { id: 'm', label: { en: 'M', fr: 'M' } },
+          { id: 'l', label: { en: 'L', fr: 'L' } },
+          { id: 'xl', label: { en: 'XL', fr: 'XL' } }
+        ],
+      },
+    ],
+    name: {
+      en: '',
+      fr: 'T-shirt noir enfant',
+    },
+    description: {
+      en: '',
+      fr: 'Imprimé en couleur sur un t-shirt pour jeunes 100 % coton pour un confort incroyable.',
     },
   },
   {
@@ -304,6 +370,23 @@ export const products: Product[] = [
       fr: 'Sac à dos pour ordinateur portable 16po Thule® Heritage Notus. Polyester recyclé et nylon. Poche intérieure zippée et poche plaquée. Housse rembourrée pour ordinateur portable 40,64 cm. Deux poches latérales pour bouteilles d\'eau.',
     },
   },
+    {
+    id: 'sport-bag',
+    category: 'lifestyle',
+    price: 60,
+    gradientClass: 'from-orange-300/35 via-red-400/25 to-pink-600/20',
+    imageGallery: [
+      '/merch/printeez-sac-sport-dufflebag.png'
+    ],
+    name: {
+      en: '',
+      fr: 'Sac de sport Dufflebag 29L',
+    },
+    description: {
+      en: '',
+      fr: 'Sac de sport Dufflebag 29L. 100% polyester. Revêtement intérieur imperméable en PVC. Poignées de transport. Bandoulière amovible. Dimensions: 52cm x 27cm (29 litres).',
+    },
+  },
   {
     id: 'ciele-cap',
     category: 'lifestyle',
@@ -387,23 +470,6 @@ export const products: Product[] = [
     description: {
       en: '',
       fr: 'Couleur noire. 100% coton. Poignées en toile tressée de 51 cm (20 po). Hauteur des poignées : 23 cm (9 po)',
-    },
-  },
-  {
-    id: 'sport-bag',
-    category: 'lifestyle',
-    price: 60,
-    gradientClass: 'from-orange-300/35 via-red-400/25 to-pink-600/20',
-    imageGallery: [
-      '/merch/printeez-sac-sport-dufflebag.png'
-    ],
-    name: {
-      en: '',
-      fr: 'Sac de sport Dufflebag 29L',
-    },
-    description: {
-      en: '',
-      fr: 'Sac de sport Dufflebag 29L. 100% polyester. Revêtement intérieur imperméable en PVC. Poignées de transport. Bandoulière amovible. Dimensions: 52cm x 27cm (29 litres).',
     },
   },
   {

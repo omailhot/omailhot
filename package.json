@@ -14,6 +14,7 @@
     "check": "biome check"
   },
   "dependencies": {
+    "@content-collections/core": "^0.14.1",
     "@faker-js/faker": "^10.0.0",
     "@inlang/paraglide-js": "^2.8.0",
     "@neondatabase/neon-js": "^0.2.0-beta.1",

@@ -991,6 +991,7 @@ const persistCartDraft = async (
 
     const payload = getOrderPayload();
     const confirmedAt = confirmSelection ? new Date().toISOString() : null;
+    const shouldLockAfterItems = confirmSelection;
     const persistedPayload = {
       ...payload,
       confirmedAt,
@@ -1013,8 +1014,8 @@ const persistCartDraft = async (
           credit_used: payload.totals.creditUsed,
           credit_remaining: payload.totals.creditRemaining,
           wallet_to_pay: payload.totals.walletToPay,
-          is_locked: confirmSelection,
-          locked_at: confirmedAt,
+          is_locked: false,
+          locked_at: null,
           raw_payload: persistedPayload,
         })
         .select("id")
@@ -1039,8 +1040,8 @@ const persistCartDraft = async (
           credit_used: payload.totals.creditUsed,
           credit_remaining: payload.totals.creditRemaining,
           wallet_to_pay: payload.totals.walletToPay,
-          is_locked: confirmSelection,
-          locked_at: confirmedAt,
+          is_locked: false,
+          locked_at: null,
           raw_payload: persistedPayload,
         })
         .eq("id", orderId)
@@ -1073,6 +1074,21 @@ const persistCartDraft = async (
     );
     if (insertItems.error) {
       throw insertItems.error;
+    }
+
+    if (shouldLockAfterItems) {
+      const lockOrder = await neonClient
+        .from("orders")
+        .update({
+          is_locked: true,
+          locked_at: confirmedAt,
+          raw_payload: persistedPayload,
+        })
+        .eq("id", orderId)
+        .eq("user_id", sessionUser.value.id);
+      if (lockOrder.error) {
+        throw lockOrder.error;
+      }
     }
 
     activeOrderConfirmedAt.value = confirmedAt;

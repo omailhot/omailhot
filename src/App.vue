@@ -715,7 +715,6 @@ const onToggleOrderLock = async () => {
 
     activeOrderConfirmedAt.value = null;
     await loadCurrentUserOrder();
-    currentView.value = "confirmation";
     actions.setCartOpen(false);
     actions.enqueueToast(t.value.reopenOrder);
   } catch (error) {

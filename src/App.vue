@@ -80,25 +80,13 @@
         >
           <div>
             <p class="text-foreground font-semibold">
-              {{
-                isReadOnlyForCurrentUser
-                  ? t.viewOnlyBannerTitle
-                  : t.loggedOutBannerTitle
-              }}
+              {{ t.loggedOutBannerTitle }}
             </p>
             <p class="text-foreground/85 dark:text-foreground/80 text-sm">
-              {{
-                isReadOnlyForCurrentUser
-                  ? t.viewOnlyBannerBody
-                  : t.loggedOutBannerBody
-              }}
+              {{ t.loggedOutBannerBody }}
             </p>
           </div>
-          <Button
-            v-if="!isReadOnlyForCurrentUser"
-            class="shrink-0"
-            @click="onConnectGoogle"
-          >
+          <Button class="shrink-0" @click="onConnectGoogle">
             {{ t.connectGoogle }}
           </Button>
         </div>
